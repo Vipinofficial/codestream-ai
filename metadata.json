@@ -1,0 +1,8 @@
+{
+  "name": "CodeStream AI",
+  "description": "A high-performance technical assessment platform featuring an AI-enhanced IDE, automated solution analysis, and real-time proctoring simulations.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
