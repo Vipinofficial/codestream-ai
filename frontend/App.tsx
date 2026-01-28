@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import Editor from './components/Editor';
 import AIChat from './components/AIChat';
 import Login from './components/Login';
+import Register from './components/Register';
 import ForgotPassword from './components/ForgotPassword';
 import RequestAccess from './components/RequestAccess';
 import Profile from './components/Profile';
@@ -63,6 +64,11 @@ const App: React.FC = () => {
     else setView(AppView.DASHBOARD);
   };
 
+  const handleRegister = (user: User) => {
+    setCurrentUser(user);
+    setView(AppView.DASHBOARD);
+  };
+
   const handleLogout = () => {
     setCurrentUser(null);
     setSelectedChallenge(null);
@@ -94,6 +100,7 @@ const App: React.FC = () => {
 
   if (!currentUser) {
     if (view === AppView.FORGOT_PASSWORD) return <ForgotPassword onBack={() => setView(AppView.DASHBOARD)} />;
+    if (view === AppView.REGISTER) return <Register onRegister={handleRegister} onNavigate={setView} />;
     if (view === AppView.REQUEST_ACCESS) return <RequestAccess onBack={() => setView(AppView.DASHBOARD)} />;
     return <Login onLogin={handleLogin} onNavigate={setView} />;
   }
@@ -255,7 +262,7 @@ const App: React.FC = () => {
                 {selectedChallenge.description.split('\n').map((line, i) => <p key={i}>{line}</p>)}
               </div>
 
-              {selectedChallenge.testCases && (
+              {selectedChallenge..testCases && (
                 <div className="mt-12 space-y-4">
                   <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">IO Unit Nodes</h4>
                   {selectedChallenge.testCases.map((tc, idx) => (
@@ -333,5 +340,3 @@ const App: React.FC = () => {
     </Layout>
   );
 };
-
-export default App;

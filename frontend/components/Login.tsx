@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { UserRole, User, AppView } from '../types';
 import { Shield, GraduationCap, Briefcase, Code2, ArrowRight, Mail, Lock, Sparkles } from 'lucide-react';
+import { api } from '../services/api';
 
 interface LoginProps {
   onLogin: (user: User) => void;
@@ -12,6 +13,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const roles = [
     {
@@ -37,21 +39,16 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
     }
   ];
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const role = selectedRole || UserRole.STUDENT;
-    onLogin({
-      id: Math.random().toString(36).substr(2, 9),
-      name: email.split('@')[0] || `Demo ${role}`,
-      role: role,
-      email: email || `${role.toLowerCase()}@codestream.ai`,
-      bio: "Technical enthusiast and problem solver.",
-      preferences: {
-        dyslexiaFont: false,
-        highContrast: false,
-        notifications: true
-      }
-    });
+    setError(null);
+    try {
+      const { user } = await api.login(email, password);
+      onLogin(user);
+    } catch (err) {
+      setError('Invalid email or password');
+      console.error(err);
+    }
   };
 
   return (
@@ -121,6 +118,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
                 ))}
               </div>
 
+              {error && <p className="text-red-500 text-sm">{error}</p>}
+
               <div className="space-y-4">
                 <div className="relative group">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-indigo-500 transition-colors" size={18} />
@@ -161,10 +160,10 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
                 </button>
                 <button 
                   type="button" 
-                  onClick={() => onNavigate(AppView.REQUEST_ACCESS)}
+                  onClick={() => onNavigate(AppView.REGISTER)}
                   className="text-slate-600 hover:text-indigo-400 transition-colors"
                 >
-                  Request Access
+                  Sign Up
                 </button>
               </div>
             </form>
@@ -174,5 +173,3 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
     </div>
   );
 };
-
-export default Login;
