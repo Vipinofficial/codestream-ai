@@ -2,7 +2,7 @@
 export enum UserRole {
   ADMIN = 'ADMIN',
   TEACHER = 'TEACHER',
-  STUDENT = 'STUDENT'
+  STUDENT = 'candidate'
 }
 
 export enum ChallengeType {

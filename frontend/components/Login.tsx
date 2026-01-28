@@ -39,19 +39,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const role = selectedRole || UserRole.STUDENT;
+    const role = selectedRole
     onLogin({
-      id: Math.random().toString(36).substr(2, 9),
-      name: email.split('@')[0] || `Demo ${role}`,
       role: role,
-      email: email || `${role.toLowerCase()}@codestream.ai`,
-      bio: "Technical enthusiast and problem solver.",
-      preferences: {
-        dyslexiaFont: false,
-        highContrast: false,
-        notifications: true
-      }
+      email: email ,
+      password: password
     });
+    
   };
 
   return (

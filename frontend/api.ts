@@ -1,7 +1,7 @@
 import { User, Challenge, UserCredentials } from './types';
 
 // In a real app, this would be in a .env file
-const API_BASE_URL = '/api'; 
+const API_BASE_URL = 'http://127.0.0.1:5000/api'; 
 
 // A utility function to handle API requests
 async function fetchApi<T>(url: string, options: RequestInit = {}): Promise<T> {
