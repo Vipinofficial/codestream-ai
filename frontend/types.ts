@@ -20,7 +20,7 @@ export enum ChallengeType {
 
 export interface User {
   id: string;
-  name: string;
+  name?: string;
   role: UserRole;
   email: string;
   avatar?: string;
@@ -31,6 +31,11 @@ export interface User {
     highContrast: boolean;
     notifications: boolean;
   };
+}
+
+export interface UserCredentials {
+  email: string;
+  password: string;
 }
 
 export interface Challenge {

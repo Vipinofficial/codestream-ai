@@ -57,6 +57,7 @@ const App: React.FC = () => {
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
+<<<<<<< Updated upstream
   const handleLogin = (user: User) => {
     setCurrentUser(user);
     if (user.role === UserRole.ADMIN) setView(AppView.SYSTEM_SETTINGS);
@@ -70,6 +71,37 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
+=======
+  const handleLogin = async (credentials: UserCredentials) => {
+    try {
+      const user = await api.login(credentials);
+      setCurrentUser({
+        ...user,
+        role: mapBackendRoleToFrontend(user.role)
+      });
+      if (user.role === 'admin') setView(AppView.SYSTEM_SETTINGS);
+      else if (user.role === 'recruiter') setView(AppView.ADMIN);
+      else setView(AppView.DASHBOARD);
+    } catch (err: any) {
+      // The Login component should handle displaying this error
+      console.error("Login failed:", err);
+      throw err; // Re-throw for the component to catch
+    }
+  };
+
+  // Map backend role to frontend role
+  const mapBackendRoleToFrontend = (backendRole: string): UserRole => {
+    switch (backendRole) {
+      case 'admin': return UserRole.ADMIN;
+      case 'recruiter': return UserRole.TEACHER;
+      case 'candidate': return UserRole.STUDENT;
+      default: return UserRole.STUDENT;
+    }
+  };
+
+  const handleLogout = async () => {
+    await api.logout();
+>>>>>>> Stashed changes
     setCurrentUser(null);
     setSelectedChallenge(null);
     setIsAssessmentActive(false);

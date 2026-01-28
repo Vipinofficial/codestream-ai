@@ -13,7 +13,22 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
   const [error, setError] = useState<string | null>(null);
+=======
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+>>>>>>> Stashed changes
+=======
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+>>>>>>> Stashed changes
+=======
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+>>>>>>> Stashed changes
 
   const roles = [
     {
@@ -41,6 +56,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
     setError(null);
     try {
       const { user } = await api.login(email, password);
@@ -48,6 +66,38 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
     } catch (err) {
       setError('Invalid email or password');
       console.error(err);
+=======
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+    setError('');
+    
+    if (!email || !password) {
+      setError('Please enter both email and password');
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      await onLogin({
+        role: selectedRole || UserRole.STUDENT,
+        email: email,
+        password: password,
+        id: ''
+      });
+    } catch (err: any) {
+      setError(err.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setIsLoading(false);
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
     }
   };
 
@@ -99,6 +149,12 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
               <p className="text-slate-500 font-medium">Select your role and enter credentials.</p>
             </div>
 
+            {error && (
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
+                <p className="text-red-500 text-sm font-medium">{error}</p>
+              </div>
+            )}
+
             <form onSubmit={handleLoginSubmit} className="space-y-6">
               <div className="grid grid-cols-3 gap-3 mb-8">
                 {roles.map((item) => (
@@ -145,9 +201,10 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
 
               <button 
                 type="submit"
-                className="w-full py-5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black uppercase tracking-[0.2em] transition-all shadow-2xl shadow-indigo-600/20 active:scale-[0.98]"
+                disabled={isLoading}
+                className="w-full py-5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-600/50 text-white rounded-2xl font-black uppercase tracking-[0.2em] transition-all shadow-2xl shadow-indigo-600/20 active:scale-[0.98] disabled:scale-100"
               >
-                Sign In
+                {isLoading ? 'Signing In...' : 'Sign In'}
               </button>
 
               <div className="flex items-center justify-between text-xs font-bold pt-4">
