@@ -21,7 +21,8 @@ import TextResponseStep from './components/TextResponseStep';
 import FileUploadStep from './components/FileUploadStep';
 import PersonalityStep from './components/PersonalityStep';
 import { CHALLENGES as INITIAL_CHALLENGES } from './constants';
-import { AppView, Challenge, User, UserRole, SessionStep, ChallengeType } from './types';
+import { AppView, Challenge, User, UserRole, SessionStep, ChallengeType, UserCredentials } from './types';
+import * as api from './api';
 import { 
   Code, BookOpen, ChevronRight, Timer, 
   UserCheck, LogOut, FileCheck, CheckCircle2, Zap, 
@@ -32,7 +33,7 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [view, setView] = useState<AppView>(AppView.DASHBOARD);
   const [sessionStep, setSessionStep] = useState<SessionStep>(SessionStep.PREVIEW);
-  const [challenges, setChallenges] = useState<Challenge[]>(INITIAL_CHALLENGES);
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     return localStorage.getItem('cs_theme') as 'light' | 'dark' || 'dark';
@@ -41,11 +42,37 @@ const App: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState(3600);
   const [isAssessmentActive, setIsAssessmentActive] = useState(false);
   const [showIDEPanel, setShowIDEPanel] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     document.body.className = theme === 'dark' ? 'dark' : 'light';
     localStorage.setItem('cs_theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    const checkUserSession = async () => {
+      try {
+        const user = await api.checkSession();
+        setCurrentUser(user);
+        if (user.role === UserRole.ADMIN) setView(AppView.SYSTEM_SETTINGS);
+        else if (user.role === UserRole.TEACHER) setView(AppView.ADMIN);
+        else setView(AppView.DASHBOARD);
+      } catch (err) {
+        // No active session, which is a normal state on first load
+        setCurrentUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    checkUserSession();
+  }, []);
+
+  useEffect(() => {
+    if (currentUser) {
+      api.getChallenges().then(setChallenges).catch(err => setError("Failed to load challenges."));
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     if (isAssessmentActive && timeLeft > 0) {
@@ -56,21 +83,29 @@ const App: React.FC = () => {
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
-  const handleLogin = (user: User) => {
-    setCurrentUser(user);
-    if (user.role === UserRole.ADMIN) setView(AppView.SYSTEM_SETTINGS);
-    else if (user.role === UserRole.TEACHER) setView(AppView.ADMIN);
-    else setView(AppView.DASHBOARD);
+  const handleLogin = async (credentials: UserCredentials) => {
+    try {
+      const user = await api.login(credentials);
+      setCurrentUser(user);
+      if (user.role === UserRole.ADMIN) setView(AppView.SYSTEM_SETTINGS);
+      else if (user.role === UserRole.TEACHER) setView(AppView.ADMIN);
+      else setView(AppView.DASHBOARD);
+    } catch (err) {
+      // The Login component should handle displaying this error
+      console.error("Login failed:", err);
+      throw err; // Re-throw for the component to catch
+    }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await api.logout();
     setCurrentUser(null);
     setSelectedChallenge(null);
     setIsAssessmentActive(false);
     setView(AppView.DASHBOARD);
   };
 
-  const startAssessment = (challenge: Challenge) => {
+  const startAssessment = async (challenge: Challenge) => {
     setSelectedChallenge(challenge);
     setIsAssessmentActive(true);
     
@@ -85,12 +120,22 @@ const App: React.FC = () => {
       setSessionStep(challenge.type === ChallengeType.THEORY ? SessionStep.MCQ : SessionStep.CODING);
       setView(AppView.CHALLENGE);
     }
+    // In a real app, you'd create a session record on the backend
+    try {
+      await api.startAssessmentSession(challenge.id);
+      // You could store the returned session ID if needed for later API calls
+    } catch (err) {
+      console.error("Failed to start assessment session:", err);
+      // Handle error, maybe prevent user from starting
+    }
   };
 
   const stopAssessment = () => {
     setIsAssessmentActive(false);
     setView(AppView.DASHBOARD);
+    // Potentially call an API to mark the session as completed/aborted
   };
+  if (isLoading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-900 text-white">Loading System...</div>;
 
   if (!currentUser) {
     if (view === AppView.FORGOT_PASSWORD) return <ForgotPassword onBack={() => setView(AppView.DASHBOARD)} />;
@@ -320,7 +365,15 @@ const App: React.FC = () => {
       case AppView.PROJECT: return renderSessionContent();
       case AppView.LIVE_INTERVIEW: return <LiveInterview onComplete={stopAssessment} />;
       case AppView.TEMPLATES: return <TemplateBuilder />;
-      case AppView.ADMIN: return <RecruiterDashboard onAddChallenge={(c) => setChallenges([...challenges, c])} />;
+      case AppView.ADMIN: return <RecruiterDashboard onAddChallenge={async (newChallengeData) => {
+        try {
+          const createdChallenge = await api.createChallenge(newChallengeData);
+          setChallenges(prev => [...prev, createdChallenge]);
+        } catch (err) {
+          console.error("Failed to create challenge:", err);
+          // Optionally show an error to the user
+        }
+      }} />;
       case AppView.SYSTEM_SETTINGS: return <AdminSettings />;
       case AppView.PROFILE: return <Profile user={currentUser!} onUpdate={setCurrentUser} onLogout={handleLogout} />;
       default: return renderDashboard();
