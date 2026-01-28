@@ -89,6 +89,7 @@ const App: React.FC = () => {
       setCurrentUser(user);
       if (user.role === UserRole.ADMIN) setView(AppView.SYSTEM_SETTINGS);
       else if (user.role === UserRole.TEACHER) setView(AppView.ADMIN);
+      else if (user.role === UserRole.STUDENT) setView(AppView.ADMIN);
       else setView(AppView.DASHBOARD);
     } catch (err) {
       // The Login component should handle displaying this error
