@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import Layout from './components/Layout';
 import Editor from './components/Editor';
@@ -22,7 +21,8 @@ import TextResponseStep from './components/TextResponseStep';
 import FileUploadStep from './components/FileUploadStep';
 import PersonalityStep from './components/PersonalityStep';
 import { CHALLENGES as INITIAL_CHALLENGES } from './constants';
-import { AppView, Challenge, User, UserRole, SessionStep, ChallengeType } from './types';
+import { AppView, Challenge, User, UserRole, SessionStep, ChallengeType, UserCredentials } from './types';
+import { api } from './services/api';
 import { 
   Code, BookOpen, ChevronRight, Timer, 
   UserCheck, LogOut, FileCheck, CheckCircle2, Zap, 
@@ -31,6 +31,7 @@ import {
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState<AppView>(AppView.DASHBOARD);
   const [sessionStep, setSessionStep] = useState<SessionStep>(SessionStep.PREVIEW);
   const [challenges, setChallenges] = useState<Challenge[]>(INITIAL_CHALLENGES);
@@ -42,6 +43,32 @@ const App: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState(3600);
   const [isAssessmentActive, setIsAssessmentActive] = useState(false);
   const [showIDEPanel, setShowIDEPanel] = useState(true);
+
+  // Check for existing session on app load
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('cs_token');
+      if (token) {
+        try {
+          const user = await api.getCurrentUser();
+          setCurrentUser({
+            ...user,
+            role: mapBackendRoleToFrontend(user.role)
+          });
+          // Redirect based on role
+          if (user.role === 'admin') setView(AppView.SYSTEM_SETTINGS);
+          else if (user.role === 'recruiter') setView(AppView.ADMIN);
+          else setView(AppView.DASHBOARD);
+        } catch (err) {
+          // Token invalid or expired - clear it
+          console.log('Session expired or invalid');
+          localStorage.removeItem('cs_token');
+        }
+      }
+      setIsLoading(false);
+    };
+    checkAuth();
+  }, []);
 
   useEffect(() => {
     document.body.className = theme === 'dark' ? 'dark' : 'light';
@@ -57,24 +84,16 @@ const App: React.FC = () => {
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
-<<<<<<< Updated upstream
-  const handleLogin = (user: User) => {
-    setCurrentUser(user);
-    if (user.role === UserRole.ADMIN) setView(AppView.SYSTEM_SETTINGS);
-    else if (user.role === UserRole.TEACHER) setView(AppView.ADMIN);
-    else setView(AppView.DASHBOARD);
-  };
-
-  const handleRegister = (user: User) => {
-    setCurrentUser(user);
-    setView(AppView.DASHBOARD);
-  };
-
-  const handleLogout = () => {
-=======
   const handleLogin = async (credentials: UserCredentials) => {
     try {
-      const user = await api.login(credentials);
+      const response = await api.login(credentials.email, credentials.password);
+      const { token, user } = response;
+      
+      // Store token for authenticated requests
+      if (token) {
+        localStorage.setItem('cs_token', token);
+      }
+      
       setCurrentUser({
         ...user,
         role: mapBackendRoleToFrontend(user.role)
@@ -83,13 +102,26 @@ const App: React.FC = () => {
       else if (user.role === 'recruiter') setView(AppView.ADMIN);
       else setView(AppView.DASHBOARD);
     } catch (err: any) {
-      // The Login component should handle displaying this error
       console.error("Login failed:", err);
-      throw err; // Re-throw for the component to catch
+      throw err;
     }
   };
 
-  // Map backend role to frontend role
+  const handleRegister = async (data: { name: string; email: string; password: string; role: string }) => {
+    try {
+      const response = await api.register(data.name, data.email, data.password, data.role);
+      const { user } = response;
+      setCurrentUser({
+        ...user,
+        role: mapBackendRoleToFrontend(user.role)
+      });
+      setView(AppView.DASHBOARD);
+    } catch (err: any) {
+      console.error("Registration failed:", err);
+      throw err;
+    }
+  };
+
   const mapBackendRoleToFrontend = (backendRole: string): UserRole => {
     switch (backendRole) {
       case 'admin': return UserRole.ADMIN;
@@ -100,8 +132,13 @@ const App: React.FC = () => {
   };
 
   const handleLogout = async () => {
-    await api.logout();
->>>>>>> Stashed changes
+    try {
+      await api.logout();
+    } catch (e) {
+      // Ignore logout errors
+    }
+    // Clear token
+    localStorage.removeItem('cs_token');
     setCurrentUser(null);
     setSelectedChallenge(null);
     setIsAssessmentActive(false);
@@ -129,6 +166,18 @@ const App: React.FC = () => {
     setIsAssessmentActive(false);
     setView(AppView.DASHBOARD);
   };
+
+  // Show loading while checking for session
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-slate-500 font-medium">Checking session...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentUser) {
     if (view === AppView.FORGOT_PASSWORD) return <ForgotPassword onBack={() => setView(AppView.DASHBOARD)} />;
@@ -294,7 +343,7 @@ const App: React.FC = () => {
                 {selectedChallenge.description.split('\n').map((line, i) => <p key={i}>{line}</p>)}
               </div>
 
-              {selectedChallenge..testCases && (
+              {selectedChallenge.testCases && (
                 <div className="mt-12 space-y-4">
                   <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">IO Unit Nodes</h4>
                   {selectedChallenge.testCases.map((tc, idx) => (
@@ -372,3 +421,6 @@ const App: React.FC = () => {
     </Layout>
   );
 };
+
+export default App;
+

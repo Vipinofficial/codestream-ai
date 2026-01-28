@@ -1,34 +1,24 @@
-
 import React, { useState } from 'react';
 import { UserRole, User, AppView } from '../types';
 import { Shield, GraduationCap, Briefcase, Code2, ArrowRight, Mail, Lock, Sparkles } from 'lucide-react';
 import { api } from '../services/api';
 
 interface LoginProps {
-  onLogin: (user: User) => void;
+  onLogin: (credentials: UserCredentials) => Promise<{ user: { role: string } & any } | void>;
   onNavigate: (view: AppView) => void;
+}
+
+interface UserCredentials {
+  email: string;
+  password: string;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-  const [error, setError] = useState<string | null>(null);
-=======
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
->>>>>>> Stashed changes
-=======
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
->>>>>>> Stashed changes
-=======
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
->>>>>>> Stashed changes
 
   const roles = [
     {
@@ -56,48 +46,33 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    setError(null);
-    try {
-      const { user } = await api.login(email, password);
-      onLogin(user);
-    } catch (err) {
-      setError('Invalid email or password');
-      console.error(err);
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     setError('');
     
     if (!email || !password) {
       setError('Please enter both email and password');
       return;
     }
+
+    if (!selectedRole) {
+      setError('Please select a role to login');
+      return;
+    }
     
     setIsLoading(true);
     
     try {
-      await onLogin({
-        role: selectedRole || UserRole.STUDENT,
-        email: email,
-        password: password,
-        id: ''
-      });
+      const response = await onLogin({ email, password });
+      
+      // Check if the logged-in user's role matches the selected role
+      if (response && response.user && response.user.role !== selectedRole) {
+        setError(`Invalid credentials for ${selectedRole} role. Please check your credentials.`);
+        setIsLoading(false);
+        return;
+      }
     } catch (err: any) {
       setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     }
   };
 
@@ -230,3 +205,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
     </div>
   );
 };
+
+export default Login;
+
