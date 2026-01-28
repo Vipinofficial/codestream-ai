@@ -1,7 +1,7 @@
+import express from 'express';
+import db from '../db.js';
 
-const express = require('express');
 const router = express.Router();
-const db = require('../db');
 
 // GET /api/challenges
 router.get('/', async (req, res) => {
@@ -30,4 +30,5 @@ router.post('/', async (req, res) => {
   res.status(201).json(challenge);
 });
 
-module.exports = router;
+export default router;
+

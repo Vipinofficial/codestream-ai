@@ -1,7 +1,7 @@
+import express from 'express';
+import db from '../db.js';
 
-const express = require('express');
 const router = express.Router();
-const db = require('../db');
 
 // POST /api/submissions
 router.post('/', async (req, res) => {
@@ -24,4 +24,5 @@ router.post('/', async (req, res) => {
   res.status(201).json(submission);
 });
 
-module.exports = router;
+export default router;
+

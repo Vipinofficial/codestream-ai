@@ -1,7 +1,7 @@
+import express from 'express';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const express = require('express');
 const router = express.Router();
-const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // IMPORTANT: Set the API_KEY in your environment variables
 const genAI = new GoogleGenerativeAI(process.env.API_KEY);
@@ -28,4 +28,5 @@ router.post('/proxy', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
+

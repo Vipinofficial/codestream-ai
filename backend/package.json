@@ -3,35 +3,23 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    "start": "node src/index.js"
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     "start": "node app.js",
-    "dev": "nodemon app.js"
->>>>>>> Stashed changes
+    "dev": "nodemon app.js",
+    "seed": "node seedMongoDB.js",
+    "seed-json": "node seedTestUsers.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-<<<<<<< Updated upstream
-    "@google/genai": "^1.38.0",
-    "body-parser": "^2.2.2",
-    "cors": "^2.8.6",
-=======
-    "bcryptjs": "^3.0.3",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
->>>>>>> Stashed changes
-    "express": "^5.2.1",
-    "lowdb": "^7.0.1"
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.3",
+    "lowdb": "^7.0.1",
+    "mongoose": "^9.1.5"
   }
 }
