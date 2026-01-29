@@ -96,7 +96,7 @@ export const api = {
 
   getChallenges: async () => {
     const token = getToken();
-    const response = await fetch(`${API_URL}/questions`, {
+    const response = await fetch(`${API_URL}/challenges`, {
       headers: token ? {
         'Authorization': `Bearer ${token}`,
       } : {},
@@ -104,6 +104,24 @@ export const api = {
     
     if (!response.ok) {
       throw new Error('Failed to fetch challenges');
+    }
+    return response.json();
+  },
+
+  createChallenge: async (challengeData) => {
+    const token = getToken();
+    const response = await fetch(`${API_URL}/challenges`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(challengeData),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to create challenge');
     }
     return response.json();
   },
@@ -182,4 +200,3 @@ export const api = {
     return response.json();
   },
 };
-

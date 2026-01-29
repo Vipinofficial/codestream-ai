@@ -1,11 +1,12 @@
 
 import React, { useState, useRef, useEffect } from 'react';
+import { read, utils, writeFile } from 'xlsx';
 import { 
   Users, FileCheck, ShieldAlert, Award, Search, Sparkles, Wand2, Plus, 
   Clock, Video, Code, Monitor, Radio, Activity, MoreVertical, X, 
   BrainCircuit, ShieldCheck, CheckCircle2, Zap, AlertTriangle, Shield, UserCheck, History, Play, Pause, ChevronLeft, ChevronRight, MessageSquare,
   PenTool, Brain, Save, Settings, Info, Timer, Briefcase, ChevronDown, ListChecks, Lock, Eye, Share2, Trash2, Sliders, Target, FileText,
-  Database, Layout, Fingerprint, Percent, Dna, Rocket, AlertCircle, RefreshCw, Terminal
+  Database, Layout, Fingerprint, Percent, Dna, Rocket, AlertCircle, RefreshCw, Terminal, Upload, Download
 } from 'lucide-react';
 import { generateChallengeFromJD, generateMCQs } from '../services/geminiService';
 import { Challenge, ChallengeType, MCQ, CodeSnapshot } from '../types';
@@ -60,6 +61,86 @@ const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({ onAddChallenge 
   const [customMCQ, setCustomMCQ] = useState<MCQ>({
     id: '', question: '', options: ['', '', '', ''], correctAnswer: 0, difficulty: 'Medium', skillTag: ''
   });
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const bstr = evt.target?.result;
+      const wb = read(bstr, { type: 'binary' });
+      const wsname = wb.SheetNames[0];
+      const ws = wb.Sheets[wsname];
+      const data = utils.sheet_to_json(ws, { header: 1 });
+      
+      const newMCQs: MCQ[] = [];
+      
+      // Skip header row
+      data.slice(1).forEach((row: any) => {
+          if (row.length < 6) return;
+          
+          const question = row[0];
+          const options = [row[1], row[2], row[3], row[4]];
+          let correctAnswer = row[5];
+          
+          // Handle correct answer formats (A, B, C, D or 0, 1, 2, 3)
+          if (typeof correctAnswer === 'string') {
+              const charCode = correctAnswer.toUpperCase().charCodeAt(0);
+              if (charCode >= 65 && charCode <= 68) {
+                  correctAnswer = charCode - 65;
+              } else {
+                  correctAnswer = parseInt(correctAnswer) || 0;
+              }
+          } else {
+               correctAnswer = parseInt(correctAnswer) || 0;
+          }
+          
+          const difficulty = row[6] || 'Medium';
+          const skillTag = row[7] || '';
+
+          if (question && options.every(o => o)) {
+              newMCQs.push({
+                  id: `q-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  question,
+                  options,
+                  correctAnswer,
+                  difficulty,
+                  skillTag
+              });
+          }
+      });
+
+      if (newMCQs.length > 0) {
+        setForgeData(prev => ({
+          ...prev,
+          mcqs: [...(prev.mcqs || []), ...newMCQs]
+        }));
+        alert(`Successfully imported ${newMCQs.length} questions.`);
+      } else {
+        alert("No valid questions found in the file. Please check the format.");
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  const downloadTemplate = () => {
+    const ws = utils.json_to_sheet([
+      { 
+        "Question": "What is the complexity of binary search?", 
+        "Option A": "O(n)", 
+        "Option B": "O(log n)", 
+        "Option C": "O(n^2)", 
+        "Option D": "O(1)", 
+        "Correct Answer": "B", 
+        "Difficulty": "Easy", 
+        "Skill Tag": "Algorithms" 
+      }
+    ]);
+    const wb = utils.book_new();
+    utils.book_append_sheet(wb, ws, "Template");
+    writeFile(wb, "MCQ_Template.xlsx");
+  };
 
   const steps = [
     { id: 1, label: 'Mission Overview', icon: FileText, desc: 'Core Dossier' },
@@ -282,7 +363,7 @@ const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({ onAddChallenge 
             </div>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-12">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             <div className="space-y-6">
               <div className="flex items-center gap-2 mb-4">
                 <PenTool size={16} className="text-indigo-500" />
@@ -333,7 +414,7 @@ const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({ onAddChallenge 
                 <Sparkles size={16} className="text-indigo-500" />
                 <h4 className="text-xs font-black uppercase text-slate-800 dark:text-slate-200 tracking-widest">AI Intelligence Synthesis</h4>
               </div>
-              <div className="bg-indigo-600/5 border border-indigo-600/10 p-10 rounded-[2.5rem] flex flex-col justify-center items-center text-center space-y-6">
+              <div className="bg-indigo-600/5 border border-indigo-600/10 p-10 rounded-[2.5rem] flex flex-col justify-center items-center text-center space-y-6 h-full">
                 <div className="p-4 bg-indigo-600 rounded-2xl text-white shadow-xl">
                   <BrainCircuit size={32} />
                 </div>
@@ -365,16 +446,54 @@ const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({ onAddChallenge 
                   {isForging ? 'Synthesizing...' : `Generate ${aiGenCount} Logic Units`}
                 </button>
               </div>
-              
-              <div className="bg-slate-50 dark:bg-white/[0.01] border border-slate-200 dark:border-white/5 p-6 rounded-3xl">
-                <div className="flex items-center justify-between">
-                   <div className="flex items-center gap-3">
-                      <ListChecks size={16} className="text-emerald-500" />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Verification Queue</span>
-                   </div>
-                   <span className="text-xs font-black text-indigo-500">{forgeData.mcqs?.length} Nodes Active</span>
-                </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 mb-4">
+                <FileCheck size={16} className="text-indigo-500" />
+                <h4 className="text-xs font-black uppercase text-slate-800 dark:text-slate-200 tracking-widest">Bulk Import</h4>
               </div>
+              <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 p-8 rounded-[2.5rem] space-y-6 h-full flex flex-col">
+                 <div className="space-y-2">
+                    <h5 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Data Ingestion</h5>
+                    <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                      Upload CSV or Excel file with columns: Question, Option A, Option B, Option C, Option D, Correct Answer (0-3 or A-D), Difficulty.
+                    </p>
+                 </div>
+
+                 <div className="relative flex-1 min-h-[150px]">
+                    <input 
+                        type="file" 
+                        accept=".csv, .xlsx, .xls"
+                        onChange={handleFileUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    <div className="absolute inset-0 w-full h-full bg-white dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-3xl flex flex-col items-center justify-center text-slate-500 hover:border-indigo-500 hover:text-indigo-500 transition-all group">
+                        <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-full mb-3 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/20 transition-colors">
+                           <Upload size={24} />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest">Click to Upload</span>
+                        <span className="text-[9px] font-medium mt-1 opacity-60">.CSV, .XLSX, .XLS</span>
+                    </div>
+                 </div>
+
+                 <button 
+                    onClick={downloadTemplate}
+                    className="w-full py-4 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-300 dark:hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
+                 >
+                    <Download size={14} /> Download Template
+                 </button>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-slate-50 dark:bg-white/[0.01] border border-slate-200 dark:border-white/5 p-6 rounded-3xl mt-8">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <ListChecks size={16} className="text-emerald-500" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Verification Queue</span>
+                </div>
+                <span className="text-xs font-black text-indigo-500">{forgeData.mcqs?.length} Nodes Active</span>
             </div>
           </div>
         </div>
