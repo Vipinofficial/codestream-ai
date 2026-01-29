@@ -6,15 +6,16 @@ const setToken = (token) => localStorage.setItem('cs_token', token);
 const removeToken = () => localStorage.removeItem('cs_token');
 
 export const api = {
-  login: async (email, password) => {
+  login: async (email, password, role) => {
+
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, role }),
     });
-    
+
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.message || 'Login failed');

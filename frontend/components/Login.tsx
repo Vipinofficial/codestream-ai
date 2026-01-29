@@ -22,14 +22,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
 
   const roles = [
     {
-      role: UserRole.STUDENT,
+      role: UserRole.CANDIDATE,
       title: 'Candidate',
       icon: GraduationCap,
       color: 'text-green-500',
       bgColor: 'bg-green-500/10'
     },
     {
-      role: UserRole.TEACHER,
+      role: UserRole.RECRUITER,
       title: 'Recruiter',
       icon: Briefcase,
       color: 'text-indigo-400',
@@ -61,7 +61,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
     setIsLoading(true);
     
     try {
-      const response = await onLogin({ email, password });
+      const response = await onLogin({ email, password, selectedRole });
       
       // Check if the logged-in user's role matches the selected role
       if (response && response.user && response.user.role !== selectedRole) {

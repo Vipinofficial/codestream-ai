@@ -5,7 +5,7 @@ import { generatePerformanceSummary } from '../services/geminiService';
 
 interface ExportButtonProps {
   data: any;
-  type: 'student' | 'teacher' | 'admin';
+  type: 'CANDIDATE' | 'RECRUITER' | 'ADMIN';
   label: string;
 }
 

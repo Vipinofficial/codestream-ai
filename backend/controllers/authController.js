@@ -33,8 +33,8 @@ export const register = async (req, res) => {
     }
 
     // Validate role
-    const validRoles = ['candidate', 'recruiter', 'admin'];
-    const userRole = role && validRoles.includes(role) ? role : 'candidate';
+    const validRoles = ['CANDIDATE','RECRUITER','ADMIN'];
+    const userRole = role && validRoles.includes(role) ? role : 'CANDIDATE';
 
     const user = await User.create({
       name,
@@ -64,13 +64,13 @@ export const register = async (req, res) => {
 /* ================= LOGIN ================= */
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email:email, role:role });
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }

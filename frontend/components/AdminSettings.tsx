@@ -23,7 +23,7 @@ const AdminSettings: React.FC = () => {
           <h2 className="text-3xl font-bold text-slate-100 mb-2 flex items-center gap-3"><ShieldCheck className="text-red-500" /> Platform Admin</h2>
           <p className="text-slate-400">Configure global settings and monitor performance.</p>
         </div>
-        <ExportButton data={siteData} type="admin" label="Global Site Audit" />
+        <ExportButton data={siteData} type="ADMIN" label="Global Site Audit" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">

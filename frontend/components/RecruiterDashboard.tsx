@@ -695,7 +695,7 @@ const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({ onAddChallenge 
               <div className="p-10 border-b border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Active Pipeline</h3>
                 <div className="flex items-center gap-4">
-                  <ExportButton data={MOCK_RESULTS} type="teacher" label="Aggregate Stats" />
+                  <ExportButton data={MOCK_RESULTS} type="RECRUITER" label="Aggregate Stats" />
                   <div className="relative">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input type="text" placeholder="Search candidates..." className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl py-3.5 pl-12 pr-6 text-xs text-slate-500 outline-none min-w-[300px]" />

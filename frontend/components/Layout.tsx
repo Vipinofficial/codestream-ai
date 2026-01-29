@@ -4,7 +4,8 @@ import { AppView, User, UserRole, Challenge } from '../types';
 import { 
   LayoutDashboard, Code2, Briefcase, FileStack, Settings, 
   Search, Moon, Sun, Menu, X, ChevronRight, Activity, 
-  Zap, Bell, ShieldCheck, UserCircle, Globe, Terminal, LogOut, Home, ArrowLeft
+  Zap, Bell, ShieldCheck, UserCircle, Globe, Terminal, LogOut, Home, ArrowLeft,
+  FileQuestionMark
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -36,9 +37,10 @@ const Layout: React.FC<LayoutProps> = ({
   }
 
   const navItems = [
-    { id: AppView.DASHBOARD, label: 'Nodes', icon: LayoutDashboard, roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT] },
-    { id: AppView.TEMPLATES, label: 'Library', icon: FileStack, roles: [UserRole.ADMIN, UserRole.TEACHER] },
-    { id: AppView.ADMIN, label: 'Command', icon: Briefcase, roles: [UserRole.ADMIN, UserRole.TEACHER] },
+    { id: AppView.DASHBOARD, label: 'Nodes', icon: LayoutDashboard, roles: [UserRole.ADMIN, UserRole.RECRUITER, UserRole.CANDIDATE] },
+    { id: AppView.TEMPLATES, label: 'Library', icon: FileStack, roles: [UserRole.ADMIN, UserRole.RECRUITER] },
+    { id: AppView.ADMIN, label: 'Command', icon: Briefcase, roles: [UserRole.ADMIN, UserRole.RECRUITER] },
+    { id: AppView.QUESTIONS, label: 'Questions', icon: FileQuestionMark, roles: [UserRole.ADMIN, UserRole.RECRUITER] },
     { id: AppView.SYSTEM_SETTINGS, label: 'Systems', icon: Settings, roles: [UserRole.ADMIN] },
   ];
 

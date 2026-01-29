@@ -1,8 +1,8 @@
 
 export enum UserRole {
   ADMIN = 'ADMIN',
-  TEACHER = 'TEACHER',
-  STUDENT = 'STUDENT'
+  RECRUITER = 'RECRUITER',
+  CANDIDATE = 'CANDIDATE'
 }
 
 export enum ChallengeType {
@@ -36,6 +36,7 @@ export interface User {
 export interface UserCredentials {
   email: string;
   password: string;
+  selectedRole: UserRole;
 }
 
 export interface Challenge {
@@ -151,7 +152,8 @@ export enum AppView {
   PROJECT = 'PROJECT',
   FORGOT_PASSWORD = 'FORGOT_PASSWORD',
   REQUEST_ACCESS = 'REQUEST_ACCESS',
-  REGISTER = 'REGISTER'
+  REGISTER = 'REGISTER',
+  QUESTIONS = 'QUESTIONS'
 }
 
 export enum SessionStep {

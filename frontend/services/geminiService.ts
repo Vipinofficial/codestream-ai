@@ -39,7 +39,7 @@ export const detectCheating = async (code: string, securityEvents: SecurityEvent
   return JSON.parse(response.text || '{"flag": false, "reasoning": "Inconclusive"}');
 };
 
-export const generatePerformanceSummary = async (data: any, type: 'student' | 'teacher' | 'admin'): Promise<string> => {
+export const generatePerformanceSummary = async (data: any, type: 'CANDIDATE' | 'RECRUITER' | 'ADMIN'): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
@@ -66,7 +66,7 @@ export const generateChallengeFromJD = async (jdText: string): Promise<Partial<C
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
-    contents: `Act as a senior technical recruiter. Based on this Job Description, generate a single unique coding challenge that would effectively screen a candidate.
+    contents: `Act as a senior technical RECRUITER. Based on this Job Description, generate a single unique coding challenge that would effectively screen a candidate.
     JD: "${jdText}"
     
     Return a JSON object with: title, difficulty (Easy/Medium/Hard), category, description, initialCode, and testCases (array of {input, expectedOutput}).`,

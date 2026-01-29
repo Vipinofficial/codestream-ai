@@ -28,6 +28,7 @@ import {
   UserCheck, LogOut, FileCheck, CheckCircle2, Zap, 
   Brain, Terminal, Sun, Moon, Info, LayoutGrid, Layers, Globe, Activity, ArrowRight, Video, PenTool, FolderCode, FileText, Table, Upload, Smile
 } from 'lucide-react';
+import AddCodingQuestionForm from './components/Questions';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -56,8 +57,8 @@ const App: React.FC = () => {
             role: mapBackendRoleToFrontend(user.role)
           });
           // Redirect based on role
-          if (user.role === 'admin') setView(AppView.SYSTEM_SETTINGS);
-          else if (user.role === 'recruiter') setView(AppView.ADMIN);
+          if (user.role === 'ADMIN') setView(AppView.SYSTEM_SETTINGS);
+          else if (user.role === 'RECRUITER') setView(AppView.ADMIN);
           else setView(AppView.DASHBOARD);
         } catch (err) {
           // Token invalid or expired - clear it
@@ -86,7 +87,8 @@ const App: React.FC = () => {
 
   const handleLogin = async (credentials: UserCredentials) => {
     try {
-      const response = await api.login(credentials.email, credentials.password);
+
+      const response = await api.login(credentials.email, credentials.password, credentials.selectedRole);
       const { token, user } = response;
       
       // Store token for authenticated requests
@@ -98,8 +100,9 @@ const App: React.FC = () => {
         ...user,
         role: mapBackendRoleToFrontend(user.role)
       });
-      if (user.role === 'admin') setView(AppView.SYSTEM_SETTINGS);
-      else if (user.role === 'recruiter') setView(AppView.ADMIN);
+      console.log(user.role)
+      if (user.role === 'ADMIN') setView(AppView.SYSTEM_SETTINGS);
+      else if (user.role === 'RECRUITER') setView(AppView.ADMIN);
       else setView(AppView.DASHBOARD);
     } catch (err: any) {
       console.error("Login failed:", err);
@@ -124,10 +127,10 @@ const App: React.FC = () => {
 
   const mapBackendRoleToFrontend = (backendRole: string): UserRole => {
     switch (backendRole) {
-      case 'admin': return UserRole.ADMIN;
-      case 'recruiter': return UserRole.TEACHER;
-      case 'candidate': return UserRole.STUDENT;
-      default: return UserRole.STUDENT;
+      case 'ADMIN': return UserRole.ADMIN;
+      case 'RECRUITER': return UserRole.RECRUITER;
+      case 'candidate': return UserRole.CANDIDATE;
+      default: return UserRole.CANDIDATE;
     }
   };
 
@@ -285,7 +288,7 @@ const App: React.FC = () => {
                    </div>
                    <ArrowRight size={14} className="text-slate-400 group-hover:translate-x-1 transition-transform" />
                  </button>
-                 {currentUser.role !== UserRole.STUDENT && (
+                 {currentUser.role !== UserRole.CANDIDATE && (
                     <button onClick={() => setView(AppView.ADMIN)} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl hover:border-indigo-500 transition-all group">
                       <div className="flex items-center gap-3">
                         <Terminal size={16} className="text-indigo-500" />
@@ -380,7 +383,7 @@ const App: React.FC = () => {
           </main>
         </div>
         
-        {isAssessmentActive && currentUser.role === UserRole.STUDENT && <ProctoringFeed />}
+        {isAssessmentActive && currentUser.role === UserRole.CANDIDATE && <ProctoringFeed />}
       </div>
     );
   };
@@ -388,6 +391,7 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (view) {
       case AppView.DASHBOARD: return renderDashboard();
+      case AppView.QUESTIONS: return <AddCodingQuestionForm/>
       case AppView.ASSESSMENT_START: return (
         <div className="flex items-center justify-center h-full p-8 bg-[#020617]">
           <div className="max-w-xl w-full bg-white/[0.02] border border-white/10 rounded-[3rem] p-16 text-center animate-in zoom-in-95 duration-500 shadow-2xl">

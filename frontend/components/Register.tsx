@@ -12,17 +12,17 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onNavigate }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.STUDENT);
+  const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.CANDIDATE);
   const [error, setError] = useState<string | null>(null);
 
   const roles = [
     {
-      role: UserRole.STUDENT,
+      role: UserRole.CANDIDATE,
       title: 'Candidate',
       icon: GraduationCap,
     },
     {
-      role: UserRole.TEACHER,
+      role: UserRole.RECRUITER,
       title: 'Recruiter',
       icon: Briefcase,
     },
