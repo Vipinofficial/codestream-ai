@@ -125,6 +125,7 @@ export const login = async (req, res) => {
     // 3️⃣ Generate token
     const token = generateToken(user);
 
+    console.log("Login successful",profile)
     // 4️⃣ Unified response
     res.json({
       message: "Login successful",
@@ -166,10 +167,17 @@ export const getMyProfile = async (req, res) => {
       profile = await SuperAdminProfile.findOne({ user: user._id });
       break;
   }
+console.log("profile",profile)
 
   res.json({
     success: true,
-    user,
+    user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role, 
+        recruiterId: profile?.recruiterId,
+      },
     profile,
   });
 };

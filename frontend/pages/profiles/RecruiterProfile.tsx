@@ -28,7 +28,7 @@ const RecruiterProfile: React.FC = () => {
   const { showToast } = useToast();
   const { currentUser} = useAuth();
   console.log("currentuserinprofile",currentUser)
-  const recruiterId = currentUser.recruiterId;
+  const recruiterId = currentUser?.recruiterId;
   const [profile, setProfile] = useState<RecruiterProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);

@@ -5,7 +5,8 @@ import {
   LayoutDashboard, Briefcase, FileStack, Settings,
   Search, Moon, Sun, Menu, X, ChevronRight, Activity,
   Zap, ShieldCheck, Globe, Terminal, LogOut,
-  FileQuestionMark
+  FileQuestionMark,
+  TestTubeDiagonalIcon
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -33,15 +34,28 @@ const Layout: React.FC<LayoutProps> = ({
     const i = setInterval(() => setLatency(Math.floor(Math.random() * 10) + 15), 4000);
     return () => clearInterval(i);
   }, []);
+
+  // Sync theme to document and persist choice
+  useEffect(() => {
+    try {
+      if (theme === 'dark') document.documentElement.classList.add('dark');
+      else document.documentElement.classList.remove('dark');
+      localStorage.setItem('cs_theme', theme);
+    } catch (e) {
+      // noop
+    }
+  }, [theme]);
   
   // ---- NAV CONFIG ----
   const navItems = [
     { label: 'Dashboard', icon: LayoutDashboard, to: '/', roles: [UserRole.ADMIN, UserRole.RECRUITER, UserRole.CANDIDATE] },
     { label: 'Library', icon: FileStack, to: '/templates', roles: [UserRole.ADMIN, UserRole.RECRUITER] },
     { label: 'Command', icon: Briefcase, to: '/admin', roles: [UserRole.ADMIN, UserRole.RECRUITER] },
-    { label: 'Questions', icon: FileQuestionMark, to: '/questions', roles: [UserRole.ADMIN, UserRole.RECRUITER] },
+    { label: 'Questions', icon: FileQuestionMark, to: '/question_build', roles: [UserRole.ADMIN, UserRole.RECRUITER] },
+    { label: 'Test Manager', icon: TestTubeDiagonalIcon, to: '/test_manager', roles: [UserRole.ADMIN, UserRole.RECRUITER] },
     { label: 'Systems', icon: Settings, to: '/settings', roles: [UserRole.ADMIN] },
   ];
+
 
   // ---- BREADCRUMB TITLE ----
   const titleMap: Record<string, string> = {
@@ -54,6 +68,8 @@ const Layout: React.FC<LayoutProps> = ({
   const pageTitle =
     Object.entries(titleMap).find(([k]) => location.pathname.startsWith(k))?.[1]
     ?? 'Console';
+
+
 
   return (
     <div className="flex h-screen-safe bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-slate-100">
