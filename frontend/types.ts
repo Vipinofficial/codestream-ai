@@ -26,11 +26,6 @@ export interface User {
   avatar?: string;
   bio?: string;
   location?: string;
-  preferences?: {
-    dyslexiaFont: boolean;
-    highContrast: boolean;
-    notifications: boolean;
-  };
 }
 
 export interface UserCredentials {

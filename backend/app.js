@@ -4,9 +4,7 @@ import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
-import questionsRoutes from './routes/questions.js';
-import challengesRoutes from './src/routes/challenges.js';
-import submissionsRoutes from './src/routes/submissions.js';
+import recruiterRouter from './routes/recruiterRoutes.js';
 
 dotenv.config();
 
@@ -27,9 +25,11 @@ app.use(bodyParser.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/questions', questionsRoutes);
-app.use('/api/challenges', challengesRoutes);
-app.use('/api/submissions', submissionsRoutes);
+app.use("/api/recruiter", recruiterRouter);
+// app.use("/admin", adminRoutes);
+// app.use("/candidate", candidateRoutes);
+// app.use("/superAdmin", superAdminRoutes);
+
 
 // Health check
 app.get('/', (req, res) => {

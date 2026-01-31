@@ -1,7 +1,12 @@
-import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
+import RecruiterProfile from "../models/Recruiter.js";
+import CandidateProfile from "../models/Candidate.js";
+import AdminProfile from "../models/Admin.js";
+import SuperAdminProfile from "../models/SuperAdmin.js";
+import Recruiter from "../models/Recruiter.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'codestream-ai-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || "codestream-ai-secret-key";
 
 /* Generate JWT */
 const generateToken = (user) => {
@@ -13,7 +18,7 @@ const generateToken = (user) => {
       role: user.role,
     },
     JWT_SECRET,
-    { expiresIn: '7d' }
+    { expiresIn: "7d" },
   );
 };
 
@@ -22,112 +27,154 @@ export const register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Name, email and password are required' });
+    const user = await User.create({ name, email, password, role });
+
+    /* 🔥 HYBRID PROFILE CREATION */
+    switch (role) {
+      case "RECRUITER":
+        await RecruiterProfile.create({
+          user: user._id,
+          recruiterId: `REC-${Date.now()}`,
+        });
+        break;
+
+      case "CANDIDATE":
+        await CandidateProfile.create({
+          user: user._id,
+          candidateId: `CAN-${Date.now()}`,
+        });
+        break;
+
+      case "ADMIN":
+        await AdminProfile.create({
+          user: user._id,
+        });
+        break;
+
+      case "SUPERADMIN":
+        await SuperAdminProfile.create({
+          user: user._id,
+        });
+        break;
     }
 
-    // Check if user exists
-    const exists = await User.findOne({ email });
-    if (exists) {
-      return res.status(409).json({ message: 'User already exists with this email' });
-    }
-
-    // Validate role
-    const validRoles = ['CANDIDATE','RECRUITER','ADMIN'];
-    const userRole = role && validRoles.includes(role) ? role : 'CANDIDATE';
-
-    const user = await User.create({
-      name,
-      email,
-      password,
-      role: userRole,
+    const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, {
+      expiresIn: "7d",
     });
-
-    const token = generateToken(user);
 
     res.status(201).json({
-      message: 'Registered successfully',
+      success: true,
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      user,
     });
-  } catch (error) {
-    console.error('Register error:', error);
-    res.status(500).json({ message: error.message });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
 /* ================= LOGIN ================= */
+
 export const login = async (req, res) => {
   try {
     const { email, password, role } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
+    if (!email || !password || !role) {
+      return res.status(400).json({
+        message: "Email, password and role are required",
+      });
     }
 
-    const user = await User.findOne({ email:email, role:role });
+    // 1️⃣ Authenticate user
+    const user = await User.findOne({ email, role });
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    // 2️⃣ Load role-specific profile
+    let profile = null;
+
+    switch (user.role) {
+      case "RECRUITER":
+        profile = await Recruiter.findOne({user:user._id});
+        break;
+
+      case "CANDIDATE":
+        profile = await Candidate.findOne({user:user._id});
+        break;
+
+      case "ADMIN":
+        profile = await Admin.findOne({user:user._id});
+        break;
+
+      case "SUPER_ADMIN":
+        profile = await SuperAdmin.findOne({user:user._id});
+        break;
+
+      default:
+        break;
+    }
+
+    // 3️⃣ Generate token
     const token = generateToken(user);
 
+    // 4️⃣ Unified response
     res.json({
-      message: 'Login successful',
+      message: "Login successful",
       token,
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: user.role, 
+        recruiterId: profile?.recruiterId,
       },
+      profile, // role-specific data
     });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ message: error.message });
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-/* ================= GET CURRENT USER ================= */
-export const getMe = async (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    
-    if (!token) {
-      return res.status(401).json({ message: 'Not authorized, no token' });
-    }
 
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const user = await User.findById(decoded.id).select('-password');
-    
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    
-    res.json({
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    });
-  } catch (error) {
-    console.error('GetMe error:', error);
-    res.status(401).json({ message: 'Not authorized, invalid token' });
+export const getMyProfile = async (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  const decoded = jwt.verify(token, JWT_SECRET);
+  const user = await User.findById(decoded.id).lean();
+
+  let profile = null;
+
+  switch (user.role) {
+    case "RECRUITER":
+      profile = await RecruiterProfile.findOne({ user: user._id });
+      break;
+    case "CANDIDATE":
+      profile = await CandidateProfile.findOne({ user: user._id });
+      break;
+    case "ADMIN":
+      profile = await AdminProfile.findOne({ user: user._id });
+      break;
+    case "SUPERADMIN":
+      profile = await SuperAdminProfile.findOne({ user: user._id });
+      break;
   }
+
+  res.json({
+    success: true,
+    user,
+    profile,
+  });
 };
 
 /* ================= LOGOUT ================= */
 export const logout = async (req, res) => {
-  res.json({ message: 'Logged out successfully' });
+  res.json({ message: "Logged out successfully" });
 };
-

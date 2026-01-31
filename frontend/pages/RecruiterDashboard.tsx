@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { generateChallengeFromJD, generateMCQs } from '../services/geminiService';
 import { Challenge, ChallengeType, MCQ, CodeSnapshot } from '../types';
-import ExportButton from './ExportButton';
+import ExportButton from '../components/ExportButton';
 
 interface RecruiterDashboardProps {
   onAddChallenge?: (challenge: Challenge) => void;
