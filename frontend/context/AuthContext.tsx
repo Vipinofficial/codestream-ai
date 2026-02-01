@@ -40,7 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const refreshUser = async () => {
     try {
       const user = await authApi.getCurrentUser();
-      console.log("user",user)
+
       setCurrentUser(user);
     } catch {
       logout();

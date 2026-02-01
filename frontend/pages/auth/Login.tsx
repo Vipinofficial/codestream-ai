@@ -60,7 +60,6 @@ const Login: React.FC<LoginProps> = () => {
       } as UserCredentials);
 
       localStorage.setItem("cs_token", res.token);
-      console.log("res",res)
       loginSuccess(res.user);
       navigate("/", { replace: true });
       showToast("Welcome back 👋", "success");

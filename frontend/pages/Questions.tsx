@@ -34,7 +34,6 @@ export default function AddCodingQuestionForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submitting Question:", form);
     // TODO: API call here
   };
 

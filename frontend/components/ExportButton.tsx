@@ -26,7 +26,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({ data, type, label }) => {
       };
 
       // In a real app, this would trigger a Blob download
-      console.log('Generated Report:', report);
+  
       
       // Simulate download delay
       setTimeout(() => {

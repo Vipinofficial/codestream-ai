@@ -6,7 +6,6 @@ import { useAuth } from '@/context/useAuth';
 
 export default function AppRoutes() {
   const {currentUser} = useAuth();
-  console.log(currentUser)
   return (
     <Routes>
       <Route index element={<DashboardPage />} />
