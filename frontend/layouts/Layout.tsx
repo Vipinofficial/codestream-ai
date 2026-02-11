@@ -8,6 +8,7 @@ import {
   FileQuestionMark,
   TestTubeDiagonalIcon
 } from 'lucide-react';
+import './Layout.css';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -38,8 +39,13 @@ const Layout: React.FC<LayoutProps> = ({
   // Sync theme to document and persist choice
   useEffect(() => {
     try {
-      if (theme === 'dark') document.documentElement.classList.add('dark');
-      else document.documentElement.classList.remove('dark');
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.setAttribute('data-theme','dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.setAttribute('data-theme','light');
+      }
       localStorage.setItem('cs_theme', theme);
     } catch (e) {
       // noop
@@ -69,13 +75,31 @@ const Layout: React.FC<LayoutProps> = ({
     Object.entries(titleMap).find(([k]) => location.pathname.startsWith(k))?.[1]
     ?? 'Console';
 
+  const isAssessment = location.pathname.startsWith('/assessment');
+
+  // Fullscreen helpers
+  const enterFullscreen = async () => {
+    try {
+      if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  const exitFullscreen = async () => {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+    } catch (e) {}
+  };
+
 
 
   return (
     <div className="flex h-screen-safe bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-slate-100">
 
       {/* ---------- SIDEBAR ---------- */}
-      <aside className="hidden lg:flex w-20 flex-col items-center py-8 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-[#020617] shrink-0 z-50">
+      {!isAssessment && (
+        <aside className="hidden lg:flex w-20 flex-col items-center py-8 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-[#020617] shrink-0 z-50">
         <div className="mb-12 cursor-pointer" onClick={() => navigate('/')}>
           <div className="bg-indigo-600 p-3 rounded-2xl shadow-2xl shadow-indigo-600/40">
             <Zap size={22} className="text-white" />
@@ -120,67 +144,86 @@ const Layout: React.FC<LayoutProps> = ({
             </button>
           )}
         </div>
-      </aside>
+        </aside>
+      )}
 
       {/* ---------- MAIN ---------- */}
       <div className="flex-1 flex flex-col overflow-hidden">
 
         {/* HEADER */}
-        <header className="h-20 flex items-center justify-between px-8 bg-white/40 dark:bg-[#020617]/40 backdrop-blur-xl border-b border-slate-200 dark:border-white/5">
-          <div className="flex items-center gap-6">
-            <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden">
-              <Menu size={24} />
-            </button>
+        { !isAssessment ? (
+          <header className="h-20 flex items-center justify-between px-8 bg-white/40 dark:bg-[#020617]/40 backdrop-blur-xl border-b border-slate-200 dark:border-white/5">
+            <div className="flex items-center gap-6">
+              <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden">
+                <Menu size={24} />
+              </button>
 
-            <div>
-              <div className="flex items-center gap-2 mb-1 text-[9px] font-black uppercase tracking-widest">
-                <span className="text-slate-400">Root</span>
-                <ChevronRight size={10} />
-                <span className="text-indigo-500">{pageTitle}</span>
-              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1 text-[9px] font-black uppercase tracking-widest">
+                  <span className="text-slate-400">Root</span>
+                  <ChevronRight size={10} />
+                  <span className="text-indigo-500">{pageTitle}</span>
+                </div>
 
-              <div className="flex items-center gap-3">
-                <span className="text-2xl font-black tracking-tighter">{pageTitle}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl font-black tracking-tighter">{pageTitle}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-6">
-            <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-slate-100 dark:bg-white/5 rounded-2xl">
-              <Search size={14} />
-              <input
-                placeholder="Search..."
-                className="bg-transparent text-[10px] font-black uppercase tracking-widest outline-none w-32"
-              />
+            <div className="flex items-center gap-6">
+              <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-slate-100 dark:bg-white/5 rounded-2xl">
+                <Search size={14} />
+                <input
+                  placeholder="Search..."
+                  className="bg-transparent text-[10px] font-black uppercase tracking-widest outline-none w-32"
+                />
+              </div>
+
+              <button
+                onClick={onLogout}
+                className="flex items-center gap-2 px-4 py-2 bg-red-500/5 text-red-500 rounded-xl"
+              >
+                <LogOut size={16} />
+                <span className="text-[10px] font-black uppercase tracking-widest">Logout</span>
+              </button>
+            </div>
+          </header>
+        ) : (
+          <header className="h-14 flex items-center justify-between px-6 bg-transparent z-60">
+            <div className="flex items-center gap-4">
+              <div className="brand font-black">CodeStream — Assessment</div>
             </div>
 
-            <button
-              onClick={onLogout}
-              className="flex items-center gap-2 px-4 py-2 bg-red-500/5 text-red-500 rounded-xl"
-            >
-              <LogOut size={16} />
-              <span className="text-[10px] font-black uppercase tracking-widest">Logout</span>
-            </button>
-          </div>
-        </header>
+            <div className="flex items-center gap-3">
+              <button onClick={toggleTheme} className="p-2 rounded-md bg-white/5">
+                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
+              <button onClick={enterFullscreen} className="p-2 rounded-md bg-white/5">Enter Fullscreen</button>
+              <button onClick={exitFullscreen} className="p-2 rounded-md bg-white/5">Exit Fullscreen</button>
+            </div>
+          </header>
+        )}
 
         {/* STATUS BAR */}
-        <div className="h-8 bg-slate-100 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/5 flex items-center px-8 text-[8px] font-black uppercase tracking-widest text-slate-500 gap-8">
-          <span className="flex items-center gap-2">
-            <Activity size={10} className="text-indigo-500" /> Latency {latency}ms
-          </span>
-          <span className="flex items-center gap-2">
-            <Globe size={10} className="text-emerald-500" /> US-EAST
-          </span>
-          <span className="flex items-center gap-2">
-            <ShieldCheck size={10} /> Secure
-          </span>
-          {currentUser && (
+        {!isAssessment && (
+          <div className="h-8 bg-slate-100 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/5 flex items-center px-8 text-[8px] font-black uppercase tracking-widest text-slate-500 gap-8">
             <span className="flex items-center gap-2">
-              <Terminal size={10} /> {currentUser.role}
+              <Activity size={10} className="text-indigo-500" /> Latency {latency}ms
             </span>
-          )}
-        </div>
+            <span className="flex items-center gap-2">
+              <Globe size={10} className="text-emerald-500" /> US-EAST
+            </span>
+            <span className="flex items-center gap-2">
+              <ShieldCheck size={10} /> Secure
+            </span>
+            {currentUser && (
+              <span className="flex items-center gap-2">
+                <Terminal size={10} /> {currentUser.role}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* CONTENT */}
         <main className="flex-1 overflow-y-auto">{children}</main>

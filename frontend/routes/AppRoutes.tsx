@@ -6,6 +6,7 @@ import { useAuth } from '@/context/useAuth';
 import QuestionBuilder from '@/pages/QuestionBuilder';
 import QuestionsPreview from '@/pages/QuestionsPreview';
 import TestManager from '@/pages/TestManager';
+import AssessmentPage from '@/pages/AssessmentPage';
 
 export default function AppRoutes() {
   const {currentUser} = useAuth();
@@ -17,6 +18,7 @@ export default function AppRoutes() {
       <Route path="question_build" element={<QuestionBuilder/>}></Route>
       <Route path="question_preview" element={<QuestionsPreview/>}></Route>
       <Route path="test_manager" element={<TestManager/>}></Route>
+      <Route path="assessment/:id" element={<AssessmentPage/>}></Route>
 
     </Routes>
   );
