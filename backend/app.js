@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
 import recruiterRouter from './routes/recruiterRoutes.js';
+import questionsRouter from './routes/questions.js';
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use(bodyParser.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use("/api/recruiter", recruiterRouter);
+app.use('/api/questions', questionsRouter);
 // app.use("/admin", adminRoutes);
 // app.use("/candidate", candidateRoutes);
 // app.use("/superAdmin", superAdminRoutes);

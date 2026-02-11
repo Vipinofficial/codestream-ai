@@ -32,11 +32,30 @@ export const createMCQQuestion = async (req, res) => {
       return res.status(400).json({ message: 'Question and at least 2 options are required' });
     }
 
+    // Normalize and validate category/difficulty to match schema enums
+    const allowedCategories = [
+      'javascript',
+      'python',
+      'java',
+      'cpp',
+      'sql',
+      'data-structures',
+      'algorithms',
+      'general',
+    ];
+    const allowedDifficulties = ['easy', 'medium', 'hard'];
+
+    let normalizedCategory = category ? String(category).toLowerCase() : 'general';
+    if (!allowedCategories.includes(normalizedCategory)) normalizedCategory = 'general';
+
+    let normalizedDifficulty = difficulty ? String(difficulty).toLowerCase() : 'medium';
+    if (!allowedDifficulties.includes(normalizedDifficulty)) normalizedDifficulty = 'medium';
+
     const mcqQuestion = await MCQQuestion.create({
       question,
       options,
-      category,
-      difficulty,
+      category: normalizedCategory,
+      difficulty: normalizedDifficulty,
       explanation,
       points,
       createdBy: req.user?.id,
@@ -112,11 +131,29 @@ export const createCodingQuestion = async (req, res) => {
       return res.status(400).json({ message: 'Title, description, category, and test cases are required' });
     }
 
+    // Normalize and validate category/difficulty to match coding schema enums
+    const allowedCodingCategories = [
+      'javascript',
+      'python',
+      'java',
+      'cpp',
+      'sql',
+      'data-structures',
+      'algorithms',
+    ];
+    const allowedDifficulties = ['easy', 'medium', 'hard'];
+
+    let normalizedCategory = category ? String(category).toLowerCase() : 'javascript';
+    if (!allowedCodingCategories.includes(normalizedCategory)) normalizedCategory = 'javascript';
+
+    let normalizedDifficulty = difficulty ? String(difficulty).toLowerCase() : 'medium';
+    if (!allowedDifficulties.includes(normalizedDifficulty)) normalizedDifficulty = 'medium';
+
     const codingQuestion = await CodingQuestion.create({
       title,
       description,
-      category,
-      difficulty,
+      category: normalizedCategory,
+      difficulty: normalizedDifficulty,
       constraints,
       starterCode,
       testCases,
