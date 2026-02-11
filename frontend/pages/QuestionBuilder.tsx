@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Code,
   List,
@@ -12,10 +13,13 @@ import {
   Plus,
   Trash2,
   GitCommit,
+  Eye,
+  Activity,
 } from "lucide-react";
 import FormInput from "../components/question-builder/FormInput";
 import FormTextarea from "../components/question-builder/FormTextarea";
 import FormSelect from "../components/question-builder/FormSelect";
+import api from "../services/api/api";
 
 const QUESTION_TYPES = [
   "CODING",
@@ -41,20 +45,44 @@ interface MatchingPair {
 }
 
 export default function QuestionBuilder() {
-  const [form, setForm] = useState<any>({
+  const navigate = useNavigate();
+  
+  const initialFormState = {
     title: "",
     type: "CODING" as QuestionType,
     difficulty: "Easy",
     category: "",
     description: "",
-    // Coding specific
     initialCode: "",
     testCode: "",
-    // MCQ/Multi-select specific
     options: [{ id: 1, text: "", isCorrect: false }],
-    // Matching specific
     matchingPairs: [{ id: 1, prompt: "", answer: "" }],
-  });
+  };
+
+  const [form, setForm] = useState<any>(initialFormState);
+  const [questionCount, setQuestionCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch question count on mount
+  useEffect(() => {
+    fetchQuestionCount();
+  }, []);
+
+  const fetchQuestionCount = async () => {
+    try {
+      const mcqRes = await api.get('/questions/mcq');
+      const codingRes = await api.get('/questions/coding');
+      const total = (mcqRes.data?.length || 0) + (codingRes.data?.length || 0);
+      setQuestionCount(total);
+    } catch (error) {
+      console.error('Failed to fetch question count:', error);
+    }
+  };
+
+  const handleNavigateToPreview = () => {
+    navigate('/question_preview');
+  };
+  
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -65,10 +93,62 @@ export default function QuestionBuilder() {
     setForm((prev: any) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submitting Question:", form);
-    // TODO: API call here, data needs to be cleaned up based on type
+    if (isLoading) return;
+    setIsLoading(true);
+    try {
+      if (form.type === "MCQ") {
+        const payload = {
+          question: form.title,
+          options: form.options.map((o: any) => ({ text: o.text, isCorrect: !!o.isCorrect })),
+          category: (form.category || 'general').toLowerCase(),
+          difficulty: (form.difficulty || 'medium').toLowerCase(),
+          explanation: form.description,
+          points: 10,
+        };
+
+        await api.post('/questions/mcq', payload);
+        alert('MCQ question saved successfully!');
+      } else if (form.type === 'CODING') {
+        const payload = {
+          title: form.title,
+          description: form.description,
+          category: (form.category || 'javascript').toLowerCase(),
+          difficulty: (form.difficulty || 'medium').toLowerCase(),
+          constraints: '',
+          starterCode: form.initialCode || '',
+          testCases: [{ input: '', expectedOutput: form.testCode || '', isHidden: false }],
+          timeLimit: 30,
+          points: 100,
+          tags: [],
+        };
+
+        await api.post('/questions/coding', payload);
+        alert('Coding question saved successfully!');
+      } else {
+        // Fallback store as MCQ-like
+        const payload = {
+          question: form.title,
+          options: form.options.map((o: any) => ({ text: o.text, isCorrect: !!o.isCorrect })),
+          category: (form.category || 'general').toLowerCase(),
+          difficulty: (form.difficulty || 'medium').toLowerCase(),
+          explanation: form.description,
+          points: 10,
+        };
+        await api.post('/questions/mcq', payload);
+        alert('Question saved successfully!');
+      }
+
+      // reset form and update count
+      setForm(initialFormState);
+      fetchQuestionCount();
+    } catch (error: any) {
+      console.error('Submit error:', error);
+      alert(error?.response?.data?.message || 'Failed to save question');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -293,15 +373,46 @@ export default function QuestionBuilder() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-6 font-sans">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 font-sans">
       <div className="max-w-4xl w-full mx-auto">
+        {/* Header with question count and preview button */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white mb-2">
+                Create Question
+              </h1>
+              <p className="text-slate-600 dark:text-slate-400">
+                Build and manage your assessment questions
+              </p>
+            </div>
+            <div className="flex flex-col items-end gap-3">
+              <div className="flex items-center gap-3 bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/50 rounded-2xl px-6 py-4 backdrop-blur-xl">
+                <Activity className="text-indigo-600 dark:text-indigo-400" size={24} />
+                <div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Questions in Session</p>
+                  <p className="text-3xl font-black text-slate-900 dark:text-white">{questionCount}</p>
+                </div>
+              </div>
+              <button
+                onClick={handleNavigateToPreview}
+                disabled={questionCount === 0}
+                className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white rounded-xl font-bold uppercase tracking-wider text-sm transition-all shadow-lg shadow-indigo-600/30 active:scale-95"
+              >
+                <Eye size={18} />
+                Preview All
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/50 rounded-3xl p-8 backdrop-blur-xl shadow-2xl">
           <div className="mb-8 text-center">
-            <h1 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight">
-              Create New Question
-            </h1>
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">
+              Add New Question
+            </h2>
             <p className="text-slate-500 dark:text-slate-400 mt-2">
-              Fill in the details to add a new question to the library.
+              Fill in the details below to create a new question
             </p>
           </div>
 
@@ -356,13 +467,23 @@ export default function QuestionBuilder() {
 
             {form.type === "MATCHING" && renderMatchingFields()}
 
-            <div className="flex justify-end pt-6">
+            <div className="flex justify-between items-center pt-6 border-t border-slate-200 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={handleNavigateToPreview}
+                disabled={questionCount === 0}
+                className="flex items-center gap-3 px-6 py-3 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-slate-700 dark:text-slate-300 rounded-xl font-bold uppercase tracking-wider text-sm transition-all"
+              >
+                <Eye size={16} />
+                View All ({questionCount})
+              </button>
               <button
                 type="submit"
-                className="flex items-center gap-3 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold uppercase tracking-wider text-sm transition-all shadow-lg shadow-indigo-500/30 active:scale-95"
+                disabled={isLoading}
+                className="flex items-center gap-3 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white rounded-xl font-bold uppercase tracking-wider text-sm transition-all shadow-lg shadow-indigo-600/30 active:scale-95"
               >
                 <Save size={18} />
-                Save Question
+                {isLoading ? 'Saving...' : 'Save Question'}
               </button>
             </div>
           </form>
