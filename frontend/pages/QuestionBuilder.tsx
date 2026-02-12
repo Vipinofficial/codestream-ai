@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Code,
@@ -20,12 +20,12 @@ import FormInput from "../components/question-builder/FormInput";
 import FormTextarea from "../components/question-builder/FormTextarea";
 import FormSelect from "../components/question-builder/FormSelect";
 import api from "../services/api/api";
+import { useToast } from "@/context/ToastContext";
 
 const QUESTION_TYPES = [
   "CODING",
   "MCQ",
   "MULTI_SELECT",
-  "MATCHING",
 ] as const;
 
 const DIFFICULTIES = ["Easy", "Medium", "Hard"] as const;
@@ -62,22 +62,29 @@ export default function QuestionBuilder() {
   const [form, setForm] = useState<any>(initialFormState);
   const [questionCount, setQuestionCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Fetch question count on mount
-  useEffect(() => {
-    fetchQuestionCount();
-  }, []);
+  const {showToast} = useToast();
 
   const fetchQuestionCount = async () => {
-    try {
-      const mcqRes = await api.get('/questions/mcq');
-      const codingRes = await api.get('/questions/coding');
-      const total = (mcqRes.data?.length || 0) + (codingRes.data?.length || 0);
-      setQuestionCount(total);
-    } catch (error) {
-      console.error('Failed to fetch question count:', error);
-    }
-  };
+  try {
+    const [mcqRes, codingRes] = await Promise.all([
+      api.get('/questions/mcq'),
+      api.get('/questions/coding'),
+    ]);
+
+    const total =
+      (Array.isArray(mcqRes.data) ? mcqRes.data.length : 0) +
+      (Array.isArray(codingRes.data) ? codingRes.data.length : 0);
+
+    setQuestionCount(total);
+  } catch (error: any) {
+    console.error('Failed to fetch question count:', error);
+
+    showToast(
+      error?.response?.data?.message || "Unable to fetch question count",
+      "error"
+    );
+  }
+};
 
   const handleNavigateToPreview = () => {
     navigate('/question_preview');
@@ -94,62 +101,113 @@ export default function QuestionBuilder() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isLoading) return;
-    setIsLoading(true);
-    try {
-      if (form.type === "MCQ") {
-        const payload = {
-          question: form.title,
-          options: form.options.map((o: any) => ({ text: o.text, isCorrect: !!o.isCorrect })),
-          category: (form.category || 'general').toLowerCase(),
-          difficulty: (form.difficulty || 'medium').toLowerCase(),
-          explanation: form.description,
-          points: 10,
-        };
+  e.preventDefault();
+  if (isLoading) return;
 
-        await api.post('/questions/mcq', payload);
-        alert('MCQ question saved successfully!');
-      } else if (form.type === 'CODING') {
-        const payload = {
-          title: form.title,
-          description: form.description,
-          category: (form.category || 'javascript').toLowerCase(),
-          difficulty: (form.difficulty || 'medium').toLowerCase(),
-          constraints: '',
-          starterCode: form.initialCode || '',
-          testCases: [{ input: '', expectedOutput: form.testCode || '', isHidden: false }],
-          timeLimit: 30,
-          points: 100,
-          tags: [],
-        };
+  // 🔎 Basic Validation
+  if (!form.title.trim()) {
+    showToast("Title is required", "error");
+    return;
+  }
 
-        await api.post('/questions/coding', payload);
-        alert('Coding question saved successfully!');
-      } else {
-        // Fallback store as MCQ-like
-        const payload = {
-          question: form.title,
-          options: form.options.map((o: any) => ({ text: o.text, isCorrect: !!o.isCorrect })),
-          category: (form.category || 'general').toLowerCase(),
-          difficulty: (form.difficulty || 'medium').toLowerCase(),
-          explanation: form.description,
-          points: 10,
-        };
-        await api.post('/questions/mcq', payload);
-        alert('Question saved successfully!');
-      }
+  if (!form.description.trim()) {
+    showToast("Description is required", "error");
+    return;
+  }
 
-      // reset form and update count
-      setForm(initialFormState);
-      fetchQuestionCount();
-    } catch (error: any) {
-      console.error('Submit error:', error);
-      alert(error?.response?.data?.message || 'Failed to save question');
-    } finally {
-      setIsLoading(false);
+  if (form.type === "MCQ" || form.type === "MULTI_SELECT") {
+    if (!form.options.length || form.options.some((o: Option) => !o.text.trim())) {
+      showToast("All options must be filled", "error");
+      return;
     }
-  };
+
+    const hasCorrect = form.options.some((o: Option) => o.isCorrect);
+    if (!hasCorrect) {
+      showToast("Select at least one correct answer", "error");
+      return;
+    }
+  }
+
+  setIsLoading(true);
+
+  try {
+    let payload;
+
+    if (form.type === "MCQ") {
+      payload = {
+        question: form.title,
+        options: form.options.map((o: Option) => ({
+          text: o.text.trim(),
+          isCorrect: !!o.isCorrect,
+        })),
+        category: (form.category || "general").toLowerCase(),
+        difficulty: (form.difficulty || "medium").toLowerCase(),
+        explanation: form.description,
+        points: 10,
+      };
+
+      await api.post("/questions/mcq", payload);
+      showToast("MCQ question saved successfully!", "success");
+
+    } else if (form.type === "CODING") {
+      payload = {
+        title: form.title,
+        description: form.description,
+        category: (form.category || "javascript").toLowerCase(),
+        difficulty: (form.difficulty || "medium").toLowerCase(),
+        constraints: "",
+        starterCode: form.initialCode || "",
+        testCases: [
+          {
+            input: "",
+            expectedOutput: form.testCode || "",
+            isHidden: false,
+          },
+        ],
+        timeLimit: 30,
+        points: 100,
+        tags: [],
+      };
+
+      await api.post("/questions/coding", payload);
+      showToast("Coding question saved successfully!", "success");
+
+    } else {
+      payload = {
+        question: form.title,
+        options: form.options.map((o: Option) => ({
+          text: o.text.trim(),
+          isCorrect: !!o.isCorrect,
+        })),
+        category: (form.category || "general").toLowerCase(),
+        difficulty: (form.difficulty || "medium").toLowerCase(),
+        explanation: form.description,
+        points: 10,
+      };  
+      console.log("payload", payload)
+      await api.post("/questions/mcq", payload);
+      showToast("Question saved successfully!", "success");
+    }
+
+    // ✅ Reset Form
+    setForm(initialFormState);
+
+    // ✅ Refresh question count safely
+    // await fetchQuestionCount();
+
+  } catch (error: any) {
+    console.error("Save question error:", error);
+
+    showToast(
+      error?.response?.data?.message ||
+      error?.message ||
+      "Something went wrong while saving the question",
+      "error"
+    );
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newType = e.target.value as QuestionType;
@@ -328,50 +386,6 @@ export default function QuestionBuilder() {
     setForm({ ...form, matchingPairs: newPairs });
   };
 
-  const renderMatchingFields = () => (
-    <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-      <h3 className="text-lg font-bold text-slate-800 dark:text-white tracking-wide">
-        Matching Pairs
-      </h3>
-      <div className="space-y-4">
-        {form.matchingPairs.map((pair: MatchingPair, index: number) => (
-          <div key={pair.id} className="flex items-center gap-4">
-            <input
-              type="text"
-              value={pair.prompt}
-              onChange={(e) => handleMatchingPairChange(pair.id, 'prompt', e.target.value)}
-              placeholder={`Prompt ${index + 1}`}
-              className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-3 px-4 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
-            />
-            <GitCommit size={24} className="text-slate-400 dark:text-slate-500" />
-            <input
-              type="text"
-              value={pair.answer}
-              onChange={(e) => handleMatchingPairChange(pair.id, 'answer', e.target.value)}
-              placeholder={`Answer ${index + 1}`}
-              className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-3 px-4 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
-            />
-            <button
-              type="button"
-              onClick={() => removeMatchingPair(pair.id)}
-              className="p-2 text-slate-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-            >
-              <Trash2 size={18} />
-            </button>
-          </div>
-        ))}
-      </div>
-      <button
-        type="button"
-        onClick={addMatchingPair}
-        className="flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
-      >
-        <Plus size={16} />
-        Add Pair
-      </button>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 font-sans">
       <div className="max-w-4xl w-full mx-auto">
@@ -464,8 +478,6 @@ export default function QuestionBuilder() {
             {form.type === "MCQ" && renderMCQFields()}
 
             {form.type === "MULTI_SELECT" && renderMultiSelectFields()}
-
-            {form.type === "MATCHING" && renderMatchingFields()}
 
             <div className="flex justify-between items-center pt-6 border-t border-slate-200 dark:border-slate-800">
               <button

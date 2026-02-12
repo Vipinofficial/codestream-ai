@@ -17,31 +17,34 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-/* ---------------------------------- */
-/* PROVIDER                           */
-/* ---------------------------------- */
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const storedUser = localStorage.getItem("cs_user");
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+
   const [loading, setLoading] = useState(true);
 
   const logout = () => {
     localStorage.removeItem("cs_token");
     localStorage.removeItem("cs_template");
     localStorage.removeItem("cs_theme");
+    localStorage.removeItem("cs_user"); // remove user
     setCurrentUser(null);
   };
 
   const loginSuccess = (user: User) => {
     setCurrentUser(user);
+    localStorage.setItem("cs_user", JSON.stringify(user)); // save user
   };
 
   const refreshUser = async () => {
     try {
       const user = await authApi.getCurrentUser();
-
       setCurrentUser(user);
+      localStorage.setItem("cs_user", JSON.stringify(user)); // update storage
     } catch {
       logout();
     }
@@ -49,12 +52,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     const token = localStorage.getItem("cs_token");
+
     if (!token) {
       setLoading(false);
       return;
     }
 
-    refreshUser().finally(() => setLoading(false));
+    // If user already in localStorage, no need to block UI
+    if (currentUser) {
+      setLoading(false);
+      refreshUser(); // background refresh
+    } else {
+      refreshUser().finally(() => setLoading(false));
+    }
   }, []);
 
   return (
@@ -73,4 +83,3 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 };
 
 export default AuthContext;
-

@@ -1,5 +1,5 @@
-import MCQQuestion from '../models/MCQQuestion.js';
-import CodingQuestion from '../models/CodingQuestion.js';
+import MCQQuestion from "../models/MCQQuestion.js";
+import CodingQuestion from "../models/CodingQuestion.js";
 
 /* ================= MCQ QUESTIONS ================= */
 
@@ -8,17 +8,17 @@ export const getMCQQuestions = async (req, res) => {
   try {
     const { category, difficulty } = req.query;
     const filter = {};
-    
+
     if (category) filter.category = category;
     if (difficulty) filter.difficulty = difficulty;
 
     const questions = await MCQQuestion.find(filter)
-      .select('-__v')
+      .select("-__v")
       .sort({ createdAt: -1 });
-    
+
     res.json(questions);
   } catch (error) {
-    console.error('GetMCQ error:', error);
+    console.error("GetMCQ error:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -26,30 +26,39 @@ export const getMCQQuestions = async (req, res) => {
 // Create MCQ question
 export const createMCQQuestion = async (req, res) => {
   try {
-    const { question, options, category, difficulty, explanation, points } = req.body;
+    const { question, options, category, difficulty, explanation, points } =
+      req.body;
 
     if (!question || !options || options.length < 2) {
-      return res.status(400).json({ message: 'Question and at least 2 options are required' });
+      return res
+        .status(400)
+        .json({ message: "Question and at least 2 options are required" });
     }
 
     // Normalize and validate category/difficulty to match schema enums
     const allowedCategories = [
-      'javascript',
-      'python',
-      'java',
-      'cpp',
-      'sql',
-      'data-structures',
-      'algorithms',
-      'general',
+      "javascript",
+      "python",
+      "java",
+      "cpp",
+      "sql",
+      "data-structures",
+      "algorithms",
+      "general",
     ];
-    const allowedDifficulties = ['easy', 'medium', 'hard'];
+    const allowedDifficulties = ["easy", "medium", "hard"];
 
-    let normalizedCategory = category ? String(category).toLowerCase() : 'general';
-    if (!allowedCategories.includes(normalizedCategory)) normalizedCategory = 'general';
+    let normalizedCategory = category
+      ? String(category).toLowerCase()
+      : "general";
+    if (!allowedCategories.includes(normalizedCategory))
+      normalizedCategory = "general";
 
-    let normalizedDifficulty = difficulty ? String(difficulty).toLowerCase() : 'medium';
-    if (!allowedDifficulties.includes(normalizedDifficulty)) normalizedDifficulty = 'medium';
+    let normalizedDifficulty = difficulty
+      ? String(difficulty).toLowerCase()
+      : "medium";
+    if (!allowedDifficulties.includes(normalizedDifficulty))
+      normalizedDifficulty = "medium";
 
     const mcqQuestion = await MCQQuestion.create({
       question,
@@ -63,7 +72,7 @@ export const createMCQQuestion = async (req, res) => {
 
     res.status(201).json(mcqQuestion);
   } catch (error) {
-    console.error('CreateMCQ error:', error);
+    console.error("CreateMCQ error:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -73,9 +82,9 @@ export const deleteMCQQuestion = async (req, res) => {
   try {
     const question = await MCQQuestion.findByIdAndDelete(req.params.id);
     if (!question) {
-      return res.status(404).json({ message: 'Question not found' });
+      return res.status(404).json({ message: "Question not found" });
     }
-    res.json({ message: 'Question deleted successfully' });
+    res.json({ message: "Question deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -88,18 +97,18 @@ export const getCodingQuestions = async (req, res) => {
   try {
     const { category, difficulty } = req.query;
     const filter = {};
-    
+
     if (category) filter.category = category;
     if (difficulty) filter.difficulty = difficulty;
 
     const questions = await CodingQuestion.find(filter)
-      .select('-testCases.expectedOutput') // Hide expected outputs
-      .select('-testCases.isHidden')
+      .select("-testCases.expectedOutput") // Hide expected outputs
+      .select("-testCases.isHidden")
       .sort({ createdAt: -1 });
-    
+
     res.json(questions);
   } catch (error) {
-    console.error('GetCoding error:', error);
+    console.error("GetCoding error:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -107,11 +116,12 @@ export const getCodingQuestions = async (req, res) => {
 // Get coding question with all details (for testing)
 export const getCodingQuestionById = async (req, res) => {
   try {
-    const question = await CodingQuestion.findById(req.params.id)
-      .select('-__v');
-    
+    const question = await CodingQuestion.findById(req.params.id).select(
+      "-__v",
+    );
+
     if (!question) {
-      return res.status(404).json({ message: 'Question not found' });
+      return res.status(404).json({ message: "Question not found" });
     }
     res.json(question);
   } catch (error) {
@@ -122,32 +132,56 @@ export const getCodingQuestionById = async (req, res) => {
 // Create coding question
 export const createCodingQuestion = async (req, res) => {
   try {
-    const { 
-      title, description, category, difficulty, 
-      constraints, starterCode, testCases, timeLimit, points, tags 
+    const {
+      title,
+      description,
+      category,
+      difficulty,
+      constraints,
+      starterCode,
+      testCases,
+      timeLimit,
+      points,
+      tags,
     } = req.body;
 
-    if (!title || !description || !category || !testCases || testCases.length === 0) {
-      return res.status(400).json({ message: 'Title, description, category, and test cases are required' });
+    if (
+      !title ||
+      !description ||
+      !category ||
+      !testCases ||
+      testCases.length === 0
+    ) {
+      return res
+        .status(400)
+        .json({
+          message: "Title, description, category, and test cases are required",
+        });
     }
 
     // Normalize and validate category/difficulty to match coding schema enums
     const allowedCodingCategories = [
-      'javascript',
-      'python',
-      'java',
-      'cpp',
-      'sql',
-      'data-structures',
-      'algorithms',
+      "javascript",
+      "python",
+      "java",
+      "cpp",
+      "sql",
+      "data-structures",
+      "algorithms",
     ];
-    const allowedDifficulties = ['easy', 'medium', 'hard'];
+    const allowedDifficulties = ["easy", "medium", "hard"];
 
-    let normalizedCategory = category ? String(category).toLowerCase() : 'javascript';
-    if (!allowedCodingCategories.includes(normalizedCategory)) normalizedCategory = 'javascript';
+    let normalizedCategory = category
+      ? String(category).toLowerCase()
+      : "javascript";
+    if (!allowedCodingCategories.includes(normalizedCategory))
+      normalizedCategory = "javascript";
 
-    let normalizedDifficulty = difficulty ? String(difficulty).toLowerCase() : 'medium';
-    if (!allowedDifficulties.includes(normalizedDifficulty)) normalizedDifficulty = 'medium';
+    let normalizedDifficulty = difficulty
+      ? String(difficulty).toLowerCase()
+      : "medium";
+    if (!allowedDifficulties.includes(normalizedDifficulty))
+      normalizedDifficulty = "medium";
 
     const codingQuestion = await CodingQuestion.create({
       title,
@@ -162,10 +196,9 @@ export const createCodingQuestion = async (req, res) => {
       tags,
       createdBy: req.user?.id,
     });
-
-    res.status(201).json(codingQuestion);
+    return res.status(201).json(codingQuestion);
   } catch (error) {
-    console.error('CreateCoding error:', error);
+    console.error("CreateCoding error:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -175,11 +208,10 @@ export const deleteCodingQuestion = async (req, res) => {
   try {
     const question = await CodingQuestion.findByIdAndDelete(req.params.id);
     if (!question) {
-      return res.status(404).json({ message: 'Question not found' });
+      return res.status(404).json({ message: "Question not found" });
     }
-    res.json({ message: 'Question deleted successfully' });
+    res.json({ message: "Question deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-

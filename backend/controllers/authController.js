@@ -5,6 +5,7 @@ import CandidateProfile from "../models/Candidate.js";
 import AdminProfile from "../models/Admin.js";
 import SuperAdminProfile from "../models/SuperAdmin.js";
 import Recruiter from "../models/Recruiter.js";
+import Admin from "../models/Admin.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "codestream-ai-secret-key";
 
@@ -107,7 +108,7 @@ export const login = async (req, res) => {
         break;
 
       case "CANDIDATE":
-        profile = await Candidate.findOne({user:user._id});
+        profile = await CandidateProfile.findOne({user:user._id});
         break;
 
       case "ADMIN":
@@ -115,7 +116,7 @@ export const login = async (req, res) => {
         break;
 
       case "SUPER_ADMIN":
-        profile = await SuperAdmin.findOne({user:user._id});
+        profile = await SuperAdminProfile.findOne({user:user._id});
         break;
 
       default:
@@ -167,7 +168,6 @@ export const getMyProfile = async (req, res) => {
       profile = await SuperAdminProfile.findOne({ user: user._id });
       break;
   }
-console.log("profile",profile)
 
   res.json({
     success: true,

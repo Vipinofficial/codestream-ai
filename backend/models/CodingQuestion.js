@@ -43,7 +43,6 @@ const codingQuestionSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
-    testCases: [testCaseSchema],
     timeLimit: {
       type: Number,
       default: 30, // minutes

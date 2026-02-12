@@ -36,12 +36,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      removeToken();
-
-      // Optional: redirect to login
-      if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
-      }
+      console.log("unauthorized", error.response)
     }
 
     return Promise.reject(error);
