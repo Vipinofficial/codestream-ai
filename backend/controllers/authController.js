@@ -104,7 +104,7 @@ export const login = async (req, res) => {
 
     switch (user.role) {
       case "RECRUITER":
-        profile = await Recruiter.findOne({user:user._id});
+        profile = await RecruiterProfile.findOne({ user: user._id });
         break;
 
       case "CANDIDATE":
@@ -112,9 +112,10 @@ export const login = async (req, res) => {
         break;
 
       case "ADMIN":
-        profile = await Admin.findOne({user:user._id});
+        profile = await AdminProfile.findOne({ user: user._id });
         break;
 
+      case "SUPERADMIN":
       case "SUPER_ADMIN":
         profile = await SuperAdminProfile.findOne({user:user._id});
         break;
@@ -148,9 +149,25 @@ export const login = async (req, res) => {
 
 
 export const getMyProfile = async (req, res) => {
-  const token = req.headers.authorization?.split(" ")[1];
-  const decoded = jwt.verify(token, JWT_SECRET);
-  const user = await User.findById(decoded.id).lean();
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ success: false, message: 'Authorization header missing' });
+
+    const token = authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ success: false, message: 'Token missing' });
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      if (err.name === 'TokenExpiredError') {
+        return res.status(401).json({ success: false, message: 'Token expired' });
+      }
+      return res.status(401).json({ success: false, message: 'Invalid token' });
+    }
+
+    const user = await User.findById(decoded.id).lean();
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
   let profile = null;
 
@@ -169,17 +186,21 @@ export const getMyProfile = async (req, res) => {
       break;
   }
 
-  res.json({
-    success: true,
-    user: {
+    res.json({
+      success: true,
+      user: {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role, 
+        role: user.role,
         recruiterId: profile?.recruiterId,
       },
-    profile,
-  });
+      profile,
+    });
+  } catch (err) {
+    console.error('getMyProfile error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
 };
 
 /* ================= LOGOUT ================= */
