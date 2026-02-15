@@ -240,6 +240,27 @@ const TestList: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Modals */}
+      {selectedTestId && (
+        <>
+          <AssignTestModal
+            testId={selectedTestId.toString()}
+            testName={selectedTestName}
+            isOpen={showAssignModal}
+            onClose={() => setShowAssignModal(false)}
+            onAssign={handleAssignment}
+          />
+          <EmailSendModal
+            testId={selectedTestId.toString()}
+            testName={selectedTestName}
+            recipients={mockCandidates}
+            isOpen={showEmailModal}
+            onClose={() => setShowEmailModal(false)}
+            onSend={handleSendEmails}
+          />
+        </>
+      )}
     </div>
   );
 };
