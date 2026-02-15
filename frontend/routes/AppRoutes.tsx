@@ -6,13 +6,15 @@ import { useAuth } from '@/context/useAuth';
 import QuestionBuilder from '@/pages/QuestionBuilder';
 import QuestionsPreview from '@/pages/QuestionsPreview';
 import TestManager from '@/pages/TestManager';
+import Profile from '@/pages/profiles/Profile';
+
 
 export default function AppRoutes() {
   const {currentUser} = useAuth();
   return (
     <Routes>
       <Route index element={<DashboardPage />} />
-      <Route path="profile" element={currentUser.role === "RECRUITER" ? <RecruiterProfile /> : ""}/>
+      <Route path="profile" element={currentUser.role === "RECRUITER" ? <RecruiterProfile /> : <Profile/>}/>
       <Route path="question_build" element={<QuestionBuilder/>}></Route>
       <Route path="question_preview" element={<QuestionsPreview/>}></Route>
       <Route path="test_manager" element={<TestManager/>}></Route>

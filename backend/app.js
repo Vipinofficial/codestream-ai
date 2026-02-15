@@ -6,6 +6,8 @@ import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
 import recruiterRouter from './routes/recruiterRoutes.js';
 import questionsRouter from './routes/questions.js';
+import testRouter from './routes/testRoute.js';
+import categoryRouter from './routes/categoryRoutes.js';
 
 dotenv.config();
 
@@ -28,10 +30,8 @@ app.use(bodyParser.json());
 app.use('/api/auth', authRoutes);
 app.use("/api/recruiter", recruiterRouter);
 app.use('/api/questions', questionsRouter);
-// app.use("/admin", adminRoutes);
-// app.use("/candidate", candidateRoutes);
-// app.use("/superAdmin", superAdminRoutes);
-
+app.use("/api/tests", testRouter);
+app.use("/api/test-categories", categoryRouter);
 
 // Health check
 app.get('/', (req, res) => {

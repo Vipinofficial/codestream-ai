@@ -1,22 +1,31 @@
-import express from 'express';
-import { protect } from '../middlewares/authMiddleware.js';
-import { 
-  getMCQQuestions, createMCQQuestion, deleteMCQQuestion,
-  getCodingQuestions, getCodingQuestionById, createCodingQuestion, deleteCodingQuestion
-} from '../controllers/questionsController.js';
+import express from "express";
+import {
+  getMCQQuestions,
+  createMCQQuestion,
+  deleteMCQQuestion,
+  getCodingQuestions,
+  getCodingQuestionById,
+  createCodingQuestion,
+  deleteCodingQuestion,
+  getMCQQuestionById,
+  updateMCQQuestion,
+  updateCodingQuestion,
+} from "../controllers/questionsController.js";
 
 const router = express.Router();
 
-// MCQ Questions Routes
-router.get('/mcq', getMCQQuestions);
-router.post('/mcq', protect, createMCQQuestion);
-router.delete('/mcq/:id', protect, deleteMCQQuestion);
+// MCQ
+router.get("/mcq", getMCQQuestions);
+router.get("/mcq/:id", getMCQQuestionById);
+router.post("/mcq", createMCQQuestion);
+router.put("/mcq/:id", updateMCQQuestion);
+router.delete("/mcq/:id", deleteMCQQuestion);
 
-// Coding Questions Routes
-router.get('/coding', getCodingQuestions);
-router.get('/coding/:id', getCodingQuestionById);
-router.post('/coding', protect, createCodingQuestion);
-router.delete('/coding/:id', protect, deleteCodingQuestion);
+// Coding
+router.get("/coding", getCodingQuestions);
+router.get("/coding/:id", getCodingQuestionById);
+router.post("/coding", createCodingQuestion);
+router.put("/coding/:id", updateCodingQuestion);
+router.delete("/coding/:id", deleteCodingQuestion);
 
 export default router;
-

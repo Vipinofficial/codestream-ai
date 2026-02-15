@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Loader, AlertCircle } from 'lucide-react';
-import QuestionRow from '../components/question-preview-com/QuestionRow';
-import ExpandedRowDetails from '../components/question-preview-com/ExpandedRowDetails';
-import PreviewTableHeader from '../components/question-preview-com/PreviewTableHeader';
-import TotalsSummary from '../components/question-preview-com/TotalsSummary';
-import Pagination from '../components/question-preview-com/Pagination';
-import ActionBar from '../components/question-preview-com/ActionBar';
-import api from '../services/api/api';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { ChevronLeft, Loader, AlertCircle } from "lucide-react";
+import QuestionRow from "../components/question-preview-com/QuestionRow";
+import ExpandedRowDetails from "../components/question-preview-com/ExpandedRowDetails";
+import PreviewTableHeader from "../components/question-preview-com/PreviewTableHeader";
+import TotalsSummary from "../components/question-preview-com/TotalsSummary";
+import Pagination from "../components/question-preview-com/Pagination";
+import ActionBar from "../components/question-preview-com/ActionBar";
+import api from "../services/api/api";
 
 interface Question {
   _id?: string;
@@ -33,12 +33,14 @@ interface Question {
 const QuestionsPreview: React.FC = () => {
   const navigate = useNavigate();
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set());
+  const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(
+    new Set(),
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
-  
+  const [error, setError] = useState("");
+
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -47,43 +49,47 @@ const QuestionsPreview: React.FC = () => {
 
   const fetchQuestions = async () => {
     setIsLoading(true);
-    setError('');
+    setError("");
     try {
       const [mcqRes, codingRes] = await Promise.all([
-        api.get('/questions/mcq'),
-        api.get('/questions/coding'),
+        api.get("/questions/mcq"),
+        api.get("/questions/coding"),
       ]);
 
-      const mcqQuestions: Question[] = (mcqRes.data || []).map((q: any, idx: number) => ({
-        _id: q._id || `mcq-${idx}`,
-        title: q.question || 'Untitled MCQ',
-        type: 'MCQ',
-        difficulty: q.difficulty || 'medium',
-        category: q.category || 'general',
-        description: q.explanation || '',
-        marks: q.points || 1.0,
-        negative: 0,
-        options: q.options || [],
-        points: q.points || 10,
-      }));
+      const mcqQuestions: Question[] = (mcqRes.data || []).map(
+        (q: any, idx: number) => ({
+          _id: q._id || `mcq-${idx}`,
+          title: q.question || "Untitled MCQ",
+          type: "MCQ",
+          difficulty: q.difficulty || "medium",
+          category: q.category || "general",
+          description: q.explanation || "",
+          marks: q.points || 1.0,
+          negative: 0,
+          options: q.options || [],
+          points: q.points || 10,
+        }),
+      );
 
-      const codingQuestions: Question[] = (codingRes.data || []).map((q: any, idx: number) => ({
-        _id: q._id || `coding-${idx}`,
-        title: q.title || 'Untitled Coding',
-        type: 'CODING',
-        difficulty: q.difficulty || 'medium',
-        category: q.category || 'javascript',
-        description: q.description || '',
-        marks: q.points || 1.0,
-        negative: 0,
-        points: q.points || 100,
-        starterCode: q.starterCode || '',
-      }));
+      const codingQuestions: Question[] = (codingRes.data || []).map(
+        (q: any, idx: number) => ({
+          _id: q._id || `coding-${idx}`,
+          title: q.title || "Untitled Coding",
+          type: "CODING",
+          difficulty: q.difficulty || "medium",
+          category: q.category || "javascript",
+          description: q.description || "",
+          marks: q.points || 1.0,
+          negative: 0,
+          points: q.points || 100,
+          starterCode: q.starterCode || "",
+        }),
+      );
 
       setQuestions([...mcqQuestions, ...codingQuestions]);
     } catch (err) {
-      console.error('Failed to fetch questions:', err);
-      setError('Failed to load questions. Please try again.');
+      console.error("Failed to fetch questions:", err);
+      setError("Failed to load questions. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -107,55 +113,63 @@ const QuestionsPreview: React.FC = () => {
     if (selectedQuestions.size === questions.length) {
       setSelectedQuestions(new Set());
     } else {
-      setSelectedQuestions(new Set(questions.map(q => q._id || '')));
+      setSelectedQuestions(new Set(questions.map((q) => q._id || "")));
     }
   };
 
   const deleteSelected = async () => {
-    if (!window.confirm(`Delete ${selectedQuestions.size} question(s)?`)) return;
+    if (!window.confirm(`Delete ${selectedQuestions.size} question(s)?`))
+      return;
 
     try {
       for (const id of selectedQuestions) {
-        const question = questions.find(q => q._id === id);
-        if (question?.type === 'MCQ') {
+        const question = questions.find((q) => q._id === id);
+        if (question?.type === "MCQ") {
           await api.delete(`/questions/mcq/${id}`);
-        } else if (question?.type === 'CODING') {
+        } else if (question?.type === "CODING") {
           await api.delete(`/questions/coding/${id}`);
         }
       }
       setSelectedQuestions(new Set());
       fetchQuestions();
     } catch (error) {
-      console.error('Delete error:', error);
-      alert('Failed to delete selected questions');
+      console.error("Delete error:", error);
+      alert("Failed to delete selected questions");
     }
   };
 
   const handleDeleteQuestion = async (id: string) => {
-    if (!window.confirm('Delete this question?')) return;
+    if (!window.confirm("Delete this question?")) return;
 
     try {
-      const question = questions.find(q => q._id === id);
-      if (question?.type === 'MCQ') {
+      const question = questions.find((q) => q._id === id);
+      if (question?.type === "MCQ") {
         await api.delete(`/questions/mcq/${id}`);
-      } else if (question?.type === 'CODING') {
+      } else if (question?.type === "CODING") {
         await api.delete(`/questions/coding/${id}`);
       }
-      setSelectedQuestions(prev => {
+      setSelectedQuestions((prev) => {
         const newSet = new Set(prev);
         newSet.delete(id);
         return newSet;
       });
       fetchQuestions();
     } catch (error) {
-      console.error('Delete error:', error);
-      alert('Failed to delete question');
+      console.error("Delete error:", error);
+      alert("Failed to delete question");
     }
   };
 
   const handleEditQuestion = (id: string) => {
-    // Navigate back to builder (full edit coming later)
-    navigate('/question_build');
+    const question = questions.find((q) => q._id === id);
+    if (!question) return;
+
+    navigate("/question_build", {
+      state: {
+        questionId: id,
+        questionType: question.type,
+      },
+    });
   };
 
   const toggleExpandRow = (id: string) => {
@@ -177,14 +191,18 @@ const QuestionsPreview: React.FC = () => {
             Questions Preview
           </h1>
           <p className="text-slate-600 dark:text-slate-400">
-            Review and manage all your created questions. Edit, delete, or select multiple questions.
+            Review and manage all your created questions. Edit, delete, or
+            select multiple questions.
           </p>
         </div>
 
         {/* Error Alert */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl flex items-start gap-3">
-            <AlertCircle className="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" size={20} />
+            <AlertCircle
+              className="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5"
+              size={20}
+            />
             <p className="text-red-700 dark:text-red-300">{error}</p>
           </div>
         )}
@@ -193,8 +211,13 @@ const QuestionsPreview: React.FC = () => {
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
             <div className="flex flex-col items-center gap-4">
-              <Loader className="animate-spin text-indigo-600 dark:text-indigo-400" size={32} />
-              <p className="text-slate-600 dark:text-slate-400">Loading questions...</p>
+              <Loader
+                className="animate-spin text-indigo-600 dark:text-indigo-400"
+                size={32}
+              />
+              <p className="text-slate-600 dark:text-slate-400">
+                Loading questions...
+              </p>
             </div>
           </div>
         ) : (
@@ -215,7 +238,10 @@ const QuestionsPreview: React.FC = () => {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <PreviewTableHeader
-                    allSelected={selectedQuestions.size === questions.length && questions.length > 0}
+                    allSelected={
+                      selectedQuestions.size === questions.length &&
+                      questions.length > 0
+                    }
                     totalQuestions={questions.length}
                     onSelectAll={toggleSelectAll}
                   />
@@ -225,7 +251,8 @@ const QuestionsPreview: React.FC = () => {
                         <QuestionRow
                           question={{
                             id: idx + 1,
-                            title: question.title || question.question || 'Untitled',
+                            title:
+                              question.title || question.question || "Untitled",
                             type: question.type,
                             difficulty: question.difficulty,
                             marks: question.marks,
@@ -233,24 +260,35 @@ const QuestionsPreview: React.FC = () => {
                             maxOptLimit: question.maxOptLimit,
                           }}
                           index={startIdx + idx + 1}
-                          isSelected={selectedQuestions.has(question._id || '')}
-                          isExpanded={expandedRows.has(question._id || '')}
-                          onSelectChange={() => toggleSelectQuestion(question._id || '')}
-                          onEdit={() => handleEditQuestion(question._id || '')}
-                          onDelete={() => handleDeleteQuestion(question._id || '')}
-                          onExpandToggle={() => toggleExpandRow(question._id || '')}
+                          isSelected={selectedQuestions.has(question._id || "")}
+                          isExpanded={expandedRows.has(question._id || "")}
+                          onSelectChange={() =>
+                            toggleSelectQuestion(question._id || "")
+                          }
+                          onEdit={() => handleEditQuestion(question._id || "")}
+                          onDelete={() =>
+                            handleDeleteQuestion(question._id || "")
+                          }
+                          onExpandToggle={() =>
+                            toggleExpandRow(question._id || "")
+                          }
                         />
-                        {expandedRows.has(question._id || '') && (
-                          <ExpandedRowDetails question={{
-                            id: 0,
-                            title: question.title || question.question || 'Untitled',
-                            type: question.type,
-                            difficulty: question.difficulty,
-                            category: question.category || '',
-                            description: question.description || '',
-                            options: question.options,
-                            initialCode: question.starterCode,
-                          }} />
+                        {expandedRows.has(question._id || "") && (
+                          <ExpandedRowDetails
+                            question={{
+                              id: 0,
+                              title:
+                                question.title ||
+                                question.question ||
+                                "Untitled",
+                              type: question.type,
+                              difficulty: question.difficulty,
+                              category: question.category || "",
+                              description: question.description || "",
+                              options: question.options,
+                              initialCode: question.starterCode,
+                            }}
+                          />
                         )}
                       </React.Fragment>
                     ))}
@@ -261,7 +299,8 @@ const QuestionsPreview: React.FC = () => {
               {questions.length === 0 && !isLoading && (
                 <div className="text-center py-12">
                   <p className="text-slate-500 dark:text-slate-400 text-lg">
-                    No questions created yet. Start by creating your first question.
+                    No questions created yet. Start by creating your first
+                    question.
                   </p>
                 </div>
               )}
@@ -272,8 +311,14 @@ const QuestionsPreview: React.FC = () => {
               <div className="mb-8">
                 <TotalsSummary
                   totalQuestions={questions.length}
-                  marks={questions.reduce((sum, q) => sum + (q.marks || 1.0), 0)}
-                  negativeMarks={0}
+                  totalMarks={questions.reduce(
+                    (sum, q) => sum + Number(q.marks || 0),
+                    0,
+                  )}
+                  totalNegativeMarks={questions.reduce(
+                    (sum, q) => sum + Number(q.negative || 0),
+                    0,
+                  )}
                 />
               </div>
             )}
@@ -292,7 +337,7 @@ const QuestionsPreview: React.FC = () => {
             {/* Footer Actions */}
             <div className="flex gap-4 justify-between">
               <button
-                onClick={() => navigate('/question_build')}
+                onClick={() => navigate("/question_build")}
                 className="flex items-center gap-2 px-6 py-3 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-bold uppercase tracking-wider hover:bg-slate-300 dark:hover:bg-slate-700 transition-all"
               >
                 <ChevronLeft size={18} />

@@ -23,6 +23,81 @@ export const getMCQQuestions = async (req, res) => {
   }
 };
 
+// Get single MCQ question by ID
+export const getMCQQuestionById = async (req, res) => {
+  try {
+    const question = await MCQQuestion.findById(req.params.id).select("-__v");
+
+    if (!question) {
+      return res.status(404).json({ message: "Question not found" });
+    }
+
+    res.json(question);
+  } catch (error) {
+    console.error("GetMCQById error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Update MCQ question
+export const updateMCQQuestion = async (req, res) => {
+  try {
+    const { question, options, category, difficulty, explanation, points } =
+      req.body;
+
+    if (!question || !options || options.length < 2) {
+      return res
+        .status(400)
+        .json({ message: "Question and at least 2 options are required" });
+    }
+
+    const allowedCategories = [
+      "javascript",
+      "python",
+      "java",
+      "cpp",
+      "sql",
+      "data-structures",
+      "algorithms",
+      "general",
+    ];
+    const allowedDifficulties = ["easy", "medium", "hard"];
+
+    let normalizedCategory = category
+      ? String(category).toLowerCase()
+      : "general";
+    if (!allowedCategories.includes(normalizedCategory))
+      normalizedCategory = "general";
+
+    let normalizedDifficulty = difficulty
+      ? String(difficulty).toLowerCase()
+      : "medium";
+    if (!allowedDifficulties.includes(normalizedDifficulty))
+      normalizedDifficulty = "medium";
+
+    const updatedQuestion = await MCQQuestion.findByIdAndUpdate(
+      req.params.id,
+      {
+        question,
+        options,
+        category: normalizedCategory,
+        difficulty: normalizedDifficulty,
+        explanation,
+        points,
+      },
+      { new: true, runValidators: true },
+    );
+
+    if (!updatedQuestion) {
+      return res.status(404).json({ message: "Question not found" });
+    }
+
+    res.json(updatedQuestion);
+  } catch (error) {
+    console.error("UpdateMCQ error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
 // Create MCQ question
 export const createMCQQuestion = async (req, res) => {
   try {
@@ -90,8 +165,6 @@ export const deleteMCQQuestion = async (req, res) => {
   }
 };
 
-/* ================= CODING QUESTIONS ================= */
-
 // Get all coding questions
 export const getCodingQuestions = async (req, res) => {
   try {
@@ -109,6 +182,85 @@ export const getCodingQuestions = async (req, res) => {
     res.json(questions);
   } catch (error) {
     console.error("GetCoding error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Update coding question
+export const updateCodingQuestion = async (req, res) => {
+  try {
+    const {
+      title,
+      description,
+      category,
+      difficulty,
+      constraints,
+      starterCode,
+      testCases,
+      timeLimit,
+      points,
+      tags,
+    } = req.body;
+
+    if (
+      !title ||
+      !description ||
+      !category ||
+      !testCases ||
+      testCases.length === 0
+    ) {
+      return res.status(400).json({
+        message: "Title, description, category, and test cases are required",
+      });
+    }
+
+    const allowedCodingCategories = [
+      "javascript",
+      "python",
+      "java",
+      "cpp",
+      "sql",
+      "data-structures",
+      "algorithms",
+    ];
+    const allowedDifficulties = ["easy", "medium", "hard"];
+
+    let normalizedCategory = category
+      ? String(category).toLowerCase()
+      : "javascript";
+    if (!allowedCodingCategories.includes(normalizedCategory))
+      normalizedCategory = "javascript";
+
+    let normalizedDifficulty = difficulty
+      ? String(difficulty).toLowerCase()
+      : "medium";
+    if (!allowedDifficulties.includes(normalizedDifficulty))
+      normalizedDifficulty = "medium";
+
+    const updatedQuestion = await CodingQuestion.findByIdAndUpdate(
+      req.params.id,
+      {
+        title,
+        description,
+        category: normalizedCategory,
+        difficulty: normalizedDifficulty,
+        constraints,
+        starterCode,
+        testCases,
+        timeLimit,
+        points,
+        tags,
+      },
+      { new: true, runValidators: true },
+    );
+
+    if (!updatedQuestion) {
+      return res.status(404).json({ message: "Question not found" });
+    }
+
+    res.json(updatedQuestion);
+  } catch (error) {
+    console.error("UpdateCoding error:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -152,11 +304,9 @@ export const createCodingQuestion = async (req, res) => {
       !testCases ||
       testCases.length === 0
     ) {
-      return res
-        .status(400)
-        .json({
-          message: "Title, description, category, and test cases are required",
-        });
+      return res.status(400).json({
+        message: "Title, description, category, and test cases are required",
+      });
     }
 
     // Normalize and validate category/difficulty to match coding schema enums
